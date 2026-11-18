@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+
 import { decideNext } from './engine.js';
 import {
   SESSION_SECONDS,
@@ -8,6 +9,7 @@ import {
   clearSession,
   newSession,
 } from './store.js';
+
 import { getNextQuestion, evaluateExplanation } from './ai.js';
 
 import Welcome from './components/Welcome.jsx';
@@ -18,485 +20,469 @@ import Summary from './components/Summary.jsx';
 import About from './components/About.jsx';
 import Footer from './components/Footer.jsx';
 
-// --------------------------------------------------
-// Answer normalisation and grading
-// --------------------------------------------------
+/* -------------------------------------------------------
+   ANSWER HELPERS
+------------------------------------------------------- */
 
 function normalise(text) {
   return String(text ?? '')
-    .trim()
     .toLowerCase()
+    .trim()
     .replace(/\s+/g, ' ')
-    .replace(/[.!?,;:…]+$/u, '')
-    .replace(/[“”‘’"'`]+$/u, '')
+    .replace(/[.!?,;:…“”‘’"'`]+$/u, '')
     .trim();
 }
 
 function isPastVerb(word) {
-  const irregularPast = new Set([
-    'was', 'were', 'went', 'saw', 'did', 'had', 'made',
-    'took', 'gave', 'came', 'ate', 'wrote', 'spoke',
-    'broke', 'chose', 'drove', 'ran', 'bought', 'brought',
-    'thought', 'found', 'left', 'felt', 'kept', 'knew',
-    'read', 'slept', 'stood', 'told', 'heard', 'lost',
-    'met', 'paid', 'sent', 'sat', 'won', 'became',
-    'began', 'drank', 'swam', 'flew', 'grew',
-  ]);
+  const value = normalise(word);
 
-  return irregularPast.has(word) || /ed$/.test(word);
+  return (
+    /\b\w+ed\b/.test(value) ||
+    /\b(went|saw|did|had|was|were|came|took|made|got|gave|wrote|ate|spoke|broke|chose|drove|knew|found|bought|brought|thought|left|felt|kept|lost|won|began|became|ran|said|told|sent|spent|built|heard|held|met|paid|read|slept|stood|understood|wore|cut|put|hit|set)\b/.test(
+      value
+    )
+  );
 }
 
 function hasInvalidVerbForm(text) {
-  const words = normalise(text).split(' ');
-  const invalidPatterns = [
-    /\b(?:has|have|had)\s+(?:went|saw|ate|did|wrote|spoke|broke|chose|drove|ran|came|gave|took|began|drank|swam|flew)\b/,
-    /\b(?:has|have|had)\s+(?:go|see|eat|do|write|speak|break|choose|drive|run|come|give|take|begin|drink|swim|fly)\b/,
-    /\b(?:did|didn't|didnt)\s+(?:went|saw|ate|done|gone|wrote|spoke|broke|came|took)\b/,
-    /\b(?:he|she|it)\s+(?:go|do|have|eat|see|write|watch|play|study|try)\b/,
-    /\b(?:is|am|are|was|were)\s+(?:go|went|eat|ate|see|saw|write|wrote)\b/,
-  ];
+  const value = normalise(text);
 
-  if (invalidPatterns.some((pattern) => pattern.test(normalise(text)))) {
-    return true;
-  }
-
-  // Detect obvious missing participles after have/has.
-  const perfect = words.findIndex((word) => word === 'have' || word === 'has');
-  if (perfect !== -1 && words[perfect + 1]) {
-    const next = words[perfect + 1];
-    const baseForms = new Set([
-      'go', 'see', 'eat', 'do', 'write', 'speak',
-      'take', 'give', 'come', 'run', 'break',
-    ]);
-    if (baseForms.has(next)) return true;
-  }
-
-  return false;
+  return (
+    /\b(?:has|have)\s+(?:go|see|eat|write|take|give|speak|break|choose|drive|know|do|be|begin|come|run|drink|sing|swim|fall|forget|freeze|steal|throw|wear)\b/.test(
+      value
+    ) ||
+    /\b(?:did)\s+(?:went|saw|ate|wrote|took|gave|spoke|broke|chose|drove|knew|found|bought|brought|thought|left|felt|kept|lost|won)\b/.test(
+      value
+    ) ||
+    /\b(?:has|have)\s+\w+ed\b/.test(value) &&
+      /\b(?:gone|seen|done|been|written|eaten|taken|given|spoken|broken|chosen|driven|known|made|found|bought|brought|thought|left|felt|kept|lost|won)\b/.test(
+        value
+      ) === false
+  );
 }
 
-function deriveErrorTag(question, learnerText) {
-  const answer = normalise(learnerText);
+function deriveErrorTag(question, answer) {
+  const prompt = String(question?.prompt || '');
+  const value = normalise(answer);
 
-  // 1. Check explicitly defined traps first.
-  if (question.traps) {
-    for (const [trapText, tag] of Object.entries(question.traps)) {
-      if (normalise(trapText) === answer) return tag;
+  const traps = question?.traps;
+
+  if (traps) {
+    if (Array.isArray(traps)) {
+      const matchedTrap = traps.find((trap) => {
+        if (typeof trap === 'string') {
+          return normalise(trap) === value;
+        }
+
+        return (
+          normalise(trap?.answer) === value ||
+          normalise(trap?.value) === value
+        );
+      });
+
+      if (matchedTrap) {
+        return matchedTrap?.tag || 'form';
+      }
+    } else if (typeof traps === 'object') {
+      for (const [trapAnswer, trapTag] of Object.entries(traps)) {
+        if (normalise(trapAnswer) === value) {
+          return typeof trapTag === 'string' ? trapTag : trapTag?.tag || 'form';
+        }
+      }
     }
   }
 
-  // 2. M2: duration with for/since but simple past.
-  const hasDurationMarker = /\b(for|since)\b/i.test(question.prompt || '');
-  const hasPerfect = /\b(has|have)\b/i.test(answer);
-  const words = answer.split(' ');
-  const hasPastVerb = words.some(isPastVerb);
-
-  if (hasDurationMarker && !hasPerfect && hasPastVerb) {
+  // M2: "for" or "since" commonly signals present perfect.
+  if (
+    /\b(for|since)\b/i.test(prompt) &&
+    isPastVerb(value)
+  ) {
     return 'M2';
   }
 
-  // 3. M1: past-time marker with present perfect.
+  // M1: a finished past-time marker should not normally be
+  // combined with the present perfect.
   const hasPastMarker =
-    /\b(yesterday|ago|last)\b/i.test(question.prompt || '') ||
-    /\bin\s+(?:19|20)\d{2}\b/i.test(question.prompt || '');
+    /\b(yesterday|ago|last)\b/i.test(prompt) ||
+    /\bin\s+(?:19|20)\d{2}\b/i.test(prompt);
 
-  if (hasPastMarker && /\b(has|have)\b/i.test(answer)) {
+  const hasPerfectParticiple =
+    /\b(?:has|have)\s+(?:\w+(?:ed|en)|been|gone|done|seen|written|eaten|taken|given|spoken|broken|chosen|driven|known|made|found|bought|brought|thought|left|felt|kept|lost|won)\b/i.test(
+      value
+    );
+
+  if (hasPastMarker && hasPerfectParticiple) {
     return 'M1';
   }
 
-  // 4. Incorrect verb construction.
-  if (hasInvalidVerbForm(answer)) {
+  if (hasInvalidVerbForm(value)) {
     return 'form';
   }
 
-  // 5. Remaining marker/meaning errors.
   return 'marker';
 }
 
-/**
- * Pure, exception-safe answer grader.
- *
- * Returns: { correct: boolean, tag: null | "M1" | "M2" | "form" | "marker" }
- */
-export function gradeAnswer(question, text) {
+/* -------------------------------------------------------
+   ANSWER GRADING
+------------------------------------------------------- */
+
+export function gradeAnswer(question, learnerAnswer) {
   try {
-    if (!question || typeof question !== 'object') {
-      return { correct: false, tag: 'marker' };
+    const rawAnswer = learnerAnswer ?? '';
+
+    let answer = rawAnswer;
+
+    // Some MCQ components return the selected option index.
+    if (
+      question?.format === 'mcq' &&
+      typeof rawAnswer === 'number' &&
+      Array.isArray(question.options)
+    ) {
+      answer = question.options[rawAnswer] ?? '';
     }
 
-    let learnerText = String(text ?? '');
+    // Some MCQ components return the option as a string.
+    if (
+      question?.format === 'mcq' &&
+      typeof rawAnswer === 'string' &&
+      Array.isArray(question.options)
+    ) {
+      const numericIndex = Number(rawAnswer);
 
-    // For MCQs, accept the actual option text or its displayed index.
-    if (question.format === 'mcq' && Array.isArray(question.options)) {
-      const index = Number(learnerText);
       if (
-        learnerText.trim() !== '' &&
-        Number.isInteger(index) &&
-        index >= 0 &&
-        index < question.options.length
+        rawAnswer.trim() !== '' &&
+        Number.isInteger(numericIndex) &&
+        numericIndex >= 0 &&
+        numericIndex < question.options.length
       ) {
-        learnerText = question.options[index];
+        answer = question.options[numericIndex];
       }
     }
 
-    const learnerAnswer = normalise(learnerText);
+    const learnerText = normalise(answer);
 
     const acceptedAnswers = [
-      question.answer,
-      ...(Array.isArray(question.acceptable) ? question.acceptable : []),
-    ].map(normalise);
+      question?.answer,
+      ...(Array.isArray(question?.acceptable)
+        ? question.acceptable
+        : question?.acceptable
+          ? [question.acceptable]
+          : []),
+    ]
+      .filter((item) => item !== undefined && item !== null)
+      .map(normalise);
 
-    if (acceptedAnswers.includes(learnerAnswer)) {
-      return { correct: true, tag: null };
-    }
+    const correct = acceptedAnswers.includes(learnerText);
+
+    return {
+      correct,
+      tag: correct ? null : deriveErrorTag(question, learnerText),
+      learnerAnswer: String(answer ?? ''),
+      explanationQuality: null,
+    };
+  } catch (error) {
+    console.error('Answer grading failed:', error);
 
     return {
       correct: false,
-      tag: deriveErrorTag(question, learnerText),
+      tag: 'form',
+      learnerAnswer: String(learnerAnswer ?? ''),
+      explanationQuality: null,
     };
-  } catch {
-    // Malformed questions or unexpected learner input must never crash the app.
-    return { correct: false, tag: 'marker' };
   }
 }
 
-// --------------------------------------------------
-// Session helpers
-// --------------------------------------------------
-
-const initialSession = () => newSession();
+/* -------------------------------------------------------
+   SESSION STATE
+------------------------------------------------------- */
 
 function sessionReducer(state, action) {
   switch (action.type) {
-    case 'replace':
-      return action.state;
+    case 'SET_SESSION':
+      return action.session;
 
-    case 'tick':
-      return state.secondsLeft === action.secondsLeft
-        ? state
-        : { ...state, secondsLeft: action.secondsLeft };
+    case 'UPDATE_SESSION':
+      return {
+        ...state,
+        ...action.updates,
+      };
 
-    case 'answer':
-      return action.state;
-
-    case 'restart':
-      return newSession();
+    case 'TICK':
+      return {
+        ...state,
+        secondsLeft: Math.max(0, state.secondsLeft - 1),
+      };
 
     default:
       return state;
   }
 }
 
-function getSkill(state) {
-  const tags = Object.entries(state.wrongByTag || {})
-    .sort((a, b) => b[1] - a[1]);
+function getSkill(session) {
+  const wrongByTag = session?.wrongByTag || {};
 
-  if (tags[0]?.[1] > 0) {
-    if (['M1', 'M2', 'marker'].includes(tags[0][0])) return 'marker';
-    if (tags[0][0] === 'form') return 'form';
+  const entries = Object.entries(wrongByTag);
+  const highest = entries.sort((a, b) => b[1] - a[1])[0];
+
+  if (!highest || highest[1] === 0) {
+    return 'meaning';
   }
 
-  return ['marker', 'form', 'meaning'][state.taskIndex % 3];
+  if (highest[0] === 'M1' || highest[0] === 'M2') {
+    return 'meaning';
+  }
+
+  if (highest[0] === 'form') {
+    return 'form';
+  }
+
+  return 'marker';
 }
 
-function makeFallbackDecision(state, result, timeMs) {
-  // Used only if decideNext throws or returns an invalid result.
-  // This fallback creates exactly one log entry.
-  const nextState = {
-    ...state,
-    askedIds: [...new Set([...(state.askedIds || []), result.qid])],
-    log: [
-      ...(state.log || []),
-      {
-        qid: result.qid,
-        format: result.format || 'correct',
-        level: result.level || state.level,
-        correct: result.correct,
-        tag: result.tag,
-        rule: 'CONTINUE',
-        timeMs,
-      },
+function makeFallbackDecision(session, result, question, timeMs) {
+  const tag = result?.tag || 'marker';
+
+  const nextLogEntry = {
+    qid: question?.id,
+    format: question?.format,
+    level: session?.level || 1,
+    correct: Boolean(result?.correct),
+    tag: result?.correct ? null : tag,
+    rule: result?.correct ? 'CONTINUE' : 'ALTERNATIVE',
+    timeMs,
+  };
+
+  const wrongByTag = {
+    ...(session?.wrongByTag || {}),
+  };
+
+  if (!result?.correct) {
+    wrongByTag[tag] = (wrongByTag[tag] || 0) + 1;
+  }
+
+  const newState = {
+    ...session,
+    wrongByTag,
+    streakCorrect: result?.correct
+      ? (session?.streakCorrect || 0) + 1
+      : 0,
+    askedIds: [
+      ...new Set([...(session?.askedIds || []), question?.id]),
     ],
+    log: [...(session?.log || []), nextLogEntry],
   };
 
   return {
     rule: 'CONTINUE',
-    reason: 'Your answer has been recorded. Let’s continue practising.',
-    nextLevel: state.level,
-    newState: nextState,
+    reason: 'The adaptive decision could not be completed. Continue with the current level.',
+    nextLevel: session?.level || 1,
+    newState,
   };
 }
 
-// --------------------------------------------------
-// Main application
-// --------------------------------------------------
+/* -------------------------------------------------------
+   MAIN APP
+------------------------------------------------------- */
 
 export default function App() {
-  const [screen, setScreen] = useState('welcome');
+  const [savedSession] = useState(() => loadSession());
+
   const [session, dispatch] = useReducer(
     sessionReducer,
-    undefined,
-    initialSession
+    savedSession || null
   );
 
-  const [saved, setSaved] = useState(() => Boolean(loadSession()));
+  const [screen, setScreen] = useState('welcome');
   const [question, setQuestion] = useState(null);
   const [result, setResult] = useState(null);
   const [decision, setDecision] = useState(null);
-
-  const [diagnosticIndex, setDiagnosticIndex] = useState(0);
-  const [diagnosticRetry, setDiagnosticRetry] = useState(0);
-  const [diagnosticScore, setDiagnosticScore] = useState(0);
-  const [diagnosticQuestions, setDiagnosticQuestions] = useState([]);
-
+  const [lessonId, setLessonId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState('');
-  const [retrying, setRetrying] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
-  const questionRequest = useRef(0);
-  const answerStartedAt = useRef(0);
+  const answerStartedAt = useRef(Date.now());
+  const questionRequestId = useRef(0);
 
-  const startFresh = useCallback(() => {
+  /* -----------------------------------------------------
+     SESSION SAVE
+  ----------------------------------------------------- */
+
+  useEffect(() => {
+    if (session) {
+      saveSession(session);
+    }
+  }, [session]);
+
+  /* -----------------------------------------------------
+     QUESTION LOADING
+  ----------------------------------------------------- */
+
+  const fetchQuestion = useCallback(
+    async (currentSession) => {
+      if (!currentSession) return;
+
+      const requestId = ++questionRequestId.current;
+
+      setLoading(true);
+      setQuestion(null);
+      setResult(null);
+      setDecision(null);
+
+      try {
+        const skill = getSkill(currentSession);
+
+        const nextQuestion = await getNextQuestion({
+          skill,
+          level: currentSession.level || 1,
+          lastTag:
+            currentSession.log?.[
+              currentSession.log.length - 1
+            ]?.tag || null,
+          askedIds: currentSession.askedIds || [],
+        });
+
+        // Ignore an older request if a newer question was requested.
+        if (requestId !== questionRequestId.current) {
+          return;
+        }
+
+        if (!nextQuestion || !nextQuestion.id) {
+          throw new Error('No valid question was returned.');
+        }
+
+        setQuestion(nextQuestion);
+        answerStartedAt.current = Date.now();
+        setScreen('task');
+      } catch (error) {
+        console.error('Question loading failed:', error);
+        setScreen('summary');
+      } finally {
+        if (requestId === questionRequestId.current) {
+          setLoading(false);
+        }
+      }
+    },
+    []
+  );
+
+  /* -----------------------------------------------------
+     START / RESUME / RESTART
+  ----------------------------------------------------- */
+
+  const startSession = useCallback(() => {
     clearSession();
 
-    const fresh = newSession();
-    dispatch({ type: 'replace', state: fresh });
+    const freshSession = newSession();
 
-    setSaved(false);
-    setQuestion(null);
+    dispatch({
+      type: 'SET_SESSION',
+      session: freshSession,
+    });
+
     setResult(null);
     setDecision(null);
+    setLessonId(null);
 
-    setDiagnosticIndex(0);
-    setDiagnosticRetry(0);
-    setDiagnosticScore(0);
-    setDiagnosticQuestions([]);
+    fetchQuestion(freshSession);
+  }, [fetchQuestion]);
 
-    setRetrying(false);
-    setLoadError('');
-    setScreen('diagnostic');
-  }, []);
+  const resumeSession = useCallback(() => {
+    const existingSession = loadSession();
 
-  const resume = useCallback(() => {
-    const restored = loadSession();
-
-    if (!restored) {
-      startFresh();
+    if (!existingSession) {
+      startSession();
       return;
     }
 
-    dispatch({ type: 'replace', state: restored });
-    setSaved(true);
+    dispatch({
+      type: 'SET_SESSION',
+      session: existingSession,
+    });
 
-    setScreen(
-      restored.taskIndex >= 8 || restored.secondsLeft <= 0
-        ? 'summary'
-        : 'task'
-    );
-  }, [startFresh]);
+    fetchQuestion(existingSession);
+  }, [fetchQuestion, startSession]);
 
-  // Timer.
+  const restartSession = useCallback(() => {
+    startSession();
+  }, [startSession]);
+
+  /* -----------------------------------------------------
+     TIMER
+  ----------------------------------------------------- */
+
   useEffect(() => {
-    if (!['diagnostic', 'task', 'feedback', 'lesson'].includes(screen)) {
+    if (
+      !session ||
+      screen === 'welcome' ||
+      screen === 'summary' ||
+      session.secondsLeft <= 0
+    ) {
       return undefined;
     }
 
-    const timer = window.setInterval(() => {
-      dispatch({
-        type: 'tick',
-        secondsLeft: Math.max(0, session.secondsLeft - 1),
-      });
+    const timerId = window.setInterval(() => {
+      dispatch({ type: 'TICK' });
     }, 1000);
 
-    return () => window.clearInterval(timer);
-  }, [screen, session.secondsLeft]);
-
-  // Persist every session change.
-  useEffect(() => {
-    if (['diagnostic', 'task', 'feedback', 'lesson'].includes(screen)) {
-      saveSession(session);
-      setSaved(true);
-    }
+    return () => window.clearInterval(timerId);
   }, [session, screen]);
 
-  // Timer expiry always leads to Summary, never Welcome.
   useEffect(() => {
-    if (
-      session.secondsLeft <= 0 &&
-      ['diagnostic', 'task', 'feedback', 'lesson'].includes(screen)
-    ) {
+    if (session?.secondsLeft === 0 && screen !== 'summary') {
       setScreen('summary');
     }
-  }, [session.secondsLeft, screen]);
+  }, [session?.secondsLeft, screen]);
 
-  // ------------------------------------------------
-  // Question loading
-  // ------------------------------------------------
+  /* -----------------------------------------------------
+     SUBMIT ANSWER
+  ----------------------------------------------------- */
 
-  const fetchQuestion = useCallback(async ({
-    skill,
-    level,
-    lastTag,
-    askedIds,
-  }) => {
-    const requestId = ++questionRequest.current;
-
-    setLoading(true);
-    setLoadError('');
-
-    try {
-      const next = await getNextQuestion({
-        skill,
-        level,
-        lastTag,
-        askedIds,
-      });
-
-      if (requestId === questionRequest.current) {
-        if (!next || !next.id) {
-          throw new Error('The question response was invalid.');
-        }
-
-        setQuestion(next);
-
-        // Start the answer timer when the question is displayed.
-        answerStartedAt.current = Date.now();
-      }
-    } catch (error) {
-      if (requestId === questionRequest.current) {
-        setLoadError(
-          error?.message || 'Could not load a question. Please try again.'
-        );
-      }
-    } finally {
-      if (requestId === questionRequest.current) {
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  // Diagnostic question loading.
-  useEffect(() => {
-    if (
-      screen !== 'diagnostic' ||
-      diagnosticQuestions[diagnosticIndex]
-    ) {
-      return undefined;
-    }
-
-    let cancelled = false;
-    const skill = diagnosticIndex === 0 ? 'marker' : 'form';
-
-    getNextQuestion({
-      skill,
-      level: 1,
-      lastTag: null,
-      askedIds: session.askedIds,
-    })
-      .then((next) => {
-        if (cancelled) return;
-
-        if (!next || !next.id) {
-          throw new Error('Invalid diagnostic question.');
-        }
-
-        setDiagnosticQuestions((current) => {
-          const copy = [...current];
-          copy[diagnosticIndex] = next;
-          return copy;
-        });
-
-        setQuestion(next);
-        answerStartedAt.current = Date.now();
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setLoadError(
-            error?.message || 'Could not load the diagnostic question.'
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    screen,
-    diagnosticIndex,
-    diagnosticQuestions,
-    session.askedIds,
-    diagnosticRetry,
-  ]);
-
-  // Normal task question loading.
-  useEffect(() => {
-    if (
-      screen === 'task' &&
-      !question &&
-      !loading &&
-      !loadError
-    ) {
-      fetchQuestion({
-        skill: getSkill(session),
-        level: session.level,
-        lastTag: result?.tag ?? null,
-        askedIds: session.askedIds,
-      });
-    }
-  }, [
-    screen,
-    question,
-    loading,
-    loadError,
-    session,
-    result,
-    fetchQuestion,
-  ]);
-
-  // ------------------------------------------------
-  // Answer submission
-  // ------------------------------------------------
-
-  const submitAnswer = useCallback(async (answerText) => {
-    if (!question || loading || screen === 'feedback') return;
-
-    // Measure from when this question was actually shown.
-    const timeMs = Math.max(
-      0,
-      Date.now() - (answerStartedAt.current || Date.now())
-    );
-
-    try {
-      // All question formats use the same deterministic grader.
-      const graded = gradeAnswer(question, answerText);
-
-      let explanationQuality;
-
-      // AI explanation evaluation is retained for explain questions.
-      if (question.format === 'explain') {
-        try {
-          const evaluation = await evaluateExplanation({
-            question,
-            learnerText: answerText,
-          });
-
-          explanationQuality = evaluation.verdict;
-        } catch {
-          explanationQuality = 'poor';
-        }
+  const submitAnswer = useCallback(
+    async (learnerAnswer) => {
+      if (!question || !session || loading) {
+        return;
       }
 
-      const outcome = {
+      const timeMs = Math.max(
+        0,
+        Date.now() - answerStartedAt.current
+      );
+
+      const graded = gradeAnswer(question, learnerAnswer);
+
+      let finalResult = {
+        ...graded,
         qid: question.id,
-        correct: graded.correct,
-        tag: graded.tag,
-        ...(explanationQuality
-          ? { explanationQuality }
-          : {}),
       };
 
-      // Diagnostic answers do not consume the eight practice tasks.
-      if (screen === 'diagnostic') {
-        const updated = {
+      // Explanation evaluation adds a quality assessment.
+      // It does not replace the normal answer grading.
+      if (question.format === 'explain') {
+        try {
+          const explanationResult = await evaluateExplanation({
+            question,
+            learnerText: String(learnerAnswer ?? ''),
+          });
+
+          finalResult = {
+            ...finalResult,
+            explanationQuality:
+              explanationResult?.explanationQuality ??
+              explanationResult?.quality ??
+              explanationResult?.score ??
+              null,
+          };
+        } catch (error) {
+          console.error('Explanation evaluation failed:', error);
+        }
+      }
+
+      setResult(finalResult);
+
+      // The first two tasks are diagnostic tasks.
+      // They update askedIds but do not enter the adaptive log.
+      if ((session.taskIndex || 0) < 2) {
+        const diagnosticState = {
           ...session,
           askedIds: [
             ...new Set([
@@ -506,331 +492,311 @@ export default function App() {
           ],
         };
 
-        dispatch({ type: 'answer', state: updated });
-        saveSession(updated);
+        dispatch({
+          type: 'SET_SESSION',
+          session: diagnosticState,
+        });
 
-        if (diagnosticIndex === 0) {
-          setDiagnosticScore(graded.correct ? 1 : 0);
-          setDiagnosticIndex(1);
-          setQuestion(null);
-        } else {
-          const startingLevel =
-            diagnosticScore + (graded.correct ? 1 : 0) === 2
-              ? 2
-              : 1;
+        saveSession(diagnosticState);
 
-          const readyState = {
-            ...updated,
-            level: startingLevel,
-          };
+        setDecision({
+          rule: 'CONTINUE',
+          reason: 'Diagnostic task completed.',
+          nextLevel: diagnosticState.level || 1,
+          newState: diagnosticState,
+        });
 
-          dispatch({ type: 'answer', state: readyState });
-          saveSession(readyState);
-
-          setQuestion(null);
-          setScreen('task');
-        }
-
+        setScreen('feedback');
         return;
       }
 
-      // Pass timeMs to the engine so its single log entry records
-      // the time measured from question display.
-      let nextDecision;
-
+      // Adaptive tasks: engine.js owns the single log entry.
       try {
-        nextDecision = decideNext(session, {
-          ...outcome,
+        const adaptiveDecision = decideNext(session, {
+          ...finalResult,
           timeMs,
           format: question.format,
-          level: question.level,
+          level: session.level,
         });
 
-        if (
-          !nextDecision ||
-          !nextDecision.newState ||
-          !nextDecision.rule
-        ) {
-          throw new Error('Invalid decision returned by engine.');
+        const validDecision =
+          adaptiveDecision &&
+          adaptiveDecision.newState &&
+          ['HARDER', 'ALTERNATIVE', 'PREREQUISITE', 'CONTINUE'].includes(
+            adaptiveDecision.rule
+          );
+
+        if (!validDecision) {
+          throw new Error('Invalid decision returned by decideNext().');
         }
-      } catch {
-        nextDecision = makeFallbackDecision(
+
+        // Do not append another log entry here.
+        // Use the state returned by decideNext().
+        dispatch({
+          type: 'SET_SESSION',
+          session: adaptiveDecision.newState,
+        });
+
+        saveSession(adaptiveDecision.newState);
+
+        setDecision(adaptiveDecision);
+        setScreen('feedback');
+      } catch (error) {
+        console.error('Adaptive decision failed:', error);
+
+        const fallbackDecision = makeFallbackDecision(
           session,
-          {
-            ...outcome,
-            format: question.format,
-            level: question.level,
-          },
+          finalResult,
+          question,
           timeMs
         );
+
+        dispatch({
+          type: 'SET_SESSION',
+          session: fallbackDecision.newState,
+        });
+
+        saveSession(fallbackDecision.newState);
+
+        setDecision(fallbackDecision);
+        setScreen('feedback');
       }
+    },
+    [question, session, loading]
+  );
 
-      // IMPORTANT:
-      // decideNext owns the log entry.
-      // Do not append another log entry here.
-      const nextState = nextDecision.newState;
-
-      dispatch({ type: 'answer', state: nextState });
-      saveSession(nextState);
-      setSaved(true);
-
-      setResult(outcome);
-      setDecision(nextDecision);
-      setScreen('feedback');
-    } catch (error) {
-      // Never reset the session or navigate to Welcome on grading errors.
-      // Show safe Feedback using the current question.
-      const fallbackResult = {
-        qid: question.id,
-        correct: false,
-        tag: 'marker',
-      };
-
-      const fallbackDecision = makeFallbackDecision(
-        session,
-        {
-          ...fallbackResult,
-          format: question.format,
-          level: question.level,
-        },
-        timeMs
-      );
-
-      dispatch({
-        type: 'answer',
-        state: fallbackDecision.newState,
-      });
-
-      saveSession(fallbackDecision.newState);
-
-      setResult(fallbackResult);
-      setDecision(fallbackDecision);
-      setScreen('feedback');
-    }
-  }, [
-    question,
-    loading,
-    screen,
-    session,
-    diagnosticIndex,
-    diagnosticScore,
-  ]);
-
-  // ------------------------------------------------
-  // Next task: increment exactly once
-  // ------------------------------------------------
+  /* -----------------------------------------------------
+     NEXT QUESTION
+  ----------------------------------------------------- */
 
   const goNext = useCallback(() => {
-    if (!decision || session.secondsLeft <= 0) {
+    if (!session) return;
+
+    const nextTaskIndex = (session.taskIndex || 0) + 1;
+
+    if (nextTaskIndex >= 8 || session.secondsLeft <= 0) {
       setScreen('summary');
       return;
     }
 
-    const nextState = {
+    const nextSession = {
       ...session,
-      taskIndex: session.taskIndex + 1,
-      askedIds: [...new Set(session.askedIds || [])],
+      taskIndex: nextTaskIndex,
     };
 
-    dispatch({ type: 'answer', state: nextState });
-    saveSession(nextState);
-    setSaved(true);
+    dispatch({
+      type: 'SET_SESSION',
+      session: nextSession,
+    });
 
+    saveSession(nextSession);
+
+    fetchQuestion(nextSession);
+  }, [session, fetchQuestion]);
+
+  /* -----------------------------------------------------
+     LESSON FLOW
+  ----------------------------------------------------- */
+
+  const handleLessonDone = useCallback(() => {
+    if (!question) {
+      goNext();
+      return;
+    }
+
+    // Retry the same question after the lesson.
+    // Do not increment taskIndex here.
     setResult(null);
     setDecision(null);
-    setRetrying(false);
-    setQuestion(null);
-
-    if (
-      nextState.taskIndex >= 8 ||
-      nextState.secondsLeft <= 0
-    ) {
-      setScreen('summary');
-      return;
-    }
-
-    setScreen('task');
-
-    // The exact same nextState is used for saving and question selection.
-    fetchQuestion({
-      skill: getSkill(nextState),
-      level: nextState.level,
-      lastTag: result?.tag ?? null,
-      askedIds: nextState.askedIds,
-    });
-  }, [decision, session, result, fetchQuestion]);
-
-  // ------------------------------------------------
-  // Retry: never increment taskIndex
-  // ------------------------------------------------
-
-  const retryQuestion = useCallback(() => {
-    if (!question) {
-      setScreen('task');
-      return;
-    }
-
-    setRetrying(true);
     answerStartedAt.current = Date.now();
     setScreen('task');
-  }, [question]);
+  }, [question, goNext]);
 
-  const finishLesson = useCallback(() => {
-    retryQuestion();
-  }, [retryQuestion]);
+  /* -----------------------------------------------------
+     FEEDBACK NEXT / RETRY
+  ----------------------------------------------------- */
 
-  // ------------------------------------------------
-  // Restart
-  // ------------------------------------------------
+  const handleFeedbackNext = useCallback(() => {
+    if (
+      decision?.rule === 'ALTERNATIVE' ||
+      decision?.rule === 'PREREQUISITE'
+    ) {
+      setLessonId(decision.lessonId || null);
+      setScreen('lesson');
+      return;
+    }
 
-  const restart = useCallback(() => {
-    clearSession();
-    dispatch({ type: 'restart' });
+    goNext();
+  }, [decision, goNext]);
 
-    setSaved(false);
-    setQuestion(null);
+  const handleRetry = useCallback(() => {
     setResult(null);
     setDecision(null);
-
-    setDiagnosticIndex(0);
-    setDiagnosticQuestions([]);
-    setDiagnosticScore(0);
-
-    setLoadError('');
-    setRetrying(false);
-    setScreen('welcome');
+    answerStartedAt.current = Date.now();
+    setScreen('task');
   }, []);
 
-  // ------------------------------------------------
-  // Render
-  // ------------------------------------------------
+  /* -----------------------------------------------------
+     ABOUT
+  ----------------------------------------------------- */
+
+  if (showAbout) {
+    return (
+      <>
+        <About />
+        <button
+          type="button"
+          onClick={() => setShowAbout(false)}
+        >
+          Back
+        </button>
+        <Footer />
+      </>
+    );
+  }
+
+  /* -----------------------------------------------------
+     WELCOME SCREEN
+  ----------------------------------------------------- */
+
+  if (screen === 'welcome') {
+    return (
+      <>
+        <Welcome
+          saved={Boolean(savedSession)}
+          onStart={startSession}
+          onResume={resumeSession}
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowAbout(true)}
+        >
+          About
+        </button>
+
+        <Footer />
+      </>
+    );
+  }
+
+  /* -----------------------------------------------------
+     LOADING SCREEN
+  ----------------------------------------------------- */
+
+  if (loading || !question && screen === 'task') {
+    return (
+      <>
+        <main className="app-main">
+          <p>Preparing your next question...</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  /* -----------------------------------------------------
+     TASK SCREEN
+  ----------------------------------------------------- */
+
+  if (screen === 'task') {
+    return (
+      <>
+        <Task
+          question={question}
+          secondsLeft={session?.secondsLeft ?? SESSION_SECONDS}
+          taskIndex={session?.taskIndex ?? 0}
+          onSubmit={submitAnswer}
+        />
+
+        <Footer />
+      </>
+    );
+  }
+
+  /* -----------------------------------------------------
+     FEEDBACK SCREEN
+  ----------------------------------------------------- */
+
+  if (screen === 'feedback') {
+    if (!question || !result || !decision) {
+      return (
+        <>
+          <main className="app-main">
+            <p>Preparing feedback...</p>
+            <button type="button" onClick={goNext}>
+              Continue
+            </button>
+          </main>
+          <Footer />
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Feedback
+          question={question}
+          result={result}
+          decision={decision}
+          onNext={handleFeedbackNext}
+          onRetry={handleRetry}
+        />
+
+        <Footer />
+      </>
+    );
+  }
+
+  /* -----------------------------------------------------
+     LESSON SCREEN
+  ----------------------------------------------------- */
+
+  if (screen === 'lesson') {
+    return (
+      <>
+        <Lesson
+          lessonId={lessonId}
+          onDone={handleLessonDone}
+        />
+
+        <Footer />
+      </>
+    );
+  }
+
+  /* -----------------------------------------------------
+     SUMMARY SCREEN
+  ----------------------------------------------------- */
+
+  if (screen === 'summary') {
+    return (
+      <>
+        <Summary
+          state={session}
+          onRestart={restartSession}
+        />
+
+        <Footer />
+      </>
+    );
+  }
+
+  /* -----------------------------------------------------
+     FALLBACK
+  ----------------------------------------------------- */
 
   return (
-    <div className="app-shell">
+    <>
       <main className="app-main">
+        <p>Something went wrong. Please restart the session.</p>
 
-        {screen === 'welcome' && (
-          <Welcome
-            saved={saved ? session : null}
-            onStart={startFresh}
-            onResume={resume}
-          />
-        )}
-
-        {screen === 'diagnostic' && (
-          <section className="screen-state" aria-live="polite">
-            <p className="eyebrow">
-              Quick diagnostic · {diagnosticIndex + 1} of 2
-            </p>
-
-            {loading || !question ? (
-              <p>{loadError || 'Preparing your question…'}</p>
-            ) : (
-              <Task
-                question={question}
-                secondsLeft={session.secondsLeft}
-                taskIndex={diagnosticIndex}
-                onSubmit={submitAnswer}
-              />
-            )}
-
-            {loadError && (
-              <button
-                className="text-button"
-                onClick={() => {
-                  setLoadError('');
-                  setDiagnosticRetry((value) => value + 1);
-                }}
-              >
-                Try loading again
-              </button>
-            )}
-          </section>
-        )}
-
-        {screen === 'task' && (
-          <section className="screen-state" aria-live="polite">
-            <p className="eyebrow">
-              Practice · Task {Math.min(session.taskIndex + 1, 8)} of 8
-              {retrying ? ' · retry' : ''}
-            </p>
-
-            {loading || !question ? (
-              <p>{loadError || 'Preparing your next question…'}</p>
-            ) : (
-              <Task
-                question={question}
-                secondsLeft={session.secondsLeft}
-                taskIndex={session.taskIndex}
-                onSubmit={submitAnswer}
-              />
-            )}
-
-            {loadError && (
-              <button
-                className="text-button"
-                onClick={() => {
-                  setLoadError('');
-                  fetchQuestion({
-                    skill: getSkill(session),
-                    level: session.level,
-                    lastTag: result?.tag ?? null,
-                    askedIds: session.askedIds,
-                  });
-                }}
-              >
-                Try again
-              </button>
-            )}
-          </section>
-        )}
-
-        {screen === 'feedback' && (
-          question && result && decision ? (
-            <Feedback
-              question={question}
-              result={result}
-              decision={decision}
-              onNext={goNext}
-              onRetry={() => setScreen('lesson')}
-            />
-          ) : (
-            <section className="screen-state" aria-live="polite">
-              <h2>Answer recorded</h2>
-              <p>
-                Your response has been recorded. You can continue
-                with the next question.
-              </p>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={goNext}
-              >
-                Next
-              </button>
-            </section>
-          )
-        )}
-
-        {screen === 'lesson' && decision && (
-          <Lesson
-            lessonId={decision.lessonId}
-            onDone={finishLesson}
-          />
-        )}
-
-        {screen === 'summary' && (
-          <Summary
-            state={session}
-            onRestart={restart}
-          />
-        )}
-
-        {screen === 'about' && <About />}
-
+        <button type="button" onClick={restartSession}>
+          Restart
+        </button>
       </main>
 
       <Footer />
-    </div>
+    </>
   );
 }

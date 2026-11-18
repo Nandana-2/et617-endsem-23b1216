@@ -1,0 +1,115 @@
+Adaptive English tenses tutor
+
+Created: 11/18/2026 20:36:52
+Updated: 11/18/2026 21:39:25
+Exported: 11/18/2026 21:44:40
+Link: https://claude.ai/share/9fcf6259-05ce-4a9b-b939-2d01d41d1a9e
+
+User:
+
+11/18/2026 18:38:34
+
+PROJECT: Adaptive English-tenses tutor (simple past vs present perfect) for a
+Class 9 Olympiad learner. Vite + React (plain JS, no TypeScript, no router, no UI
+library, no Redux). Roll number token in footer: 23B1216. Vercel deploy.
+Do NOT change names or shapes below. Only write the files assigned to you.
+
+QUESTION shape (bank and AI-generated):
+{ id, format: "mcq"|"correct"|"explain"|"transform", level: 1|2|3,
+  skill: "marker"|"form"|"meaning", prompt: string, options?: string[] (mcq only),
+  answer: string, acceptable?: string[], 
+  traps?: { [wrongOptionText]: "M1"|"M2"|"form"|"marker" },
+  modelExplanation: string,
+  feedback: { correct: string, M1: string, M2: string, other: string },
+  source: "bank"|"ai" }
+M1 = "past action + visible result => present perfect" (e.g. "I have seen him yesterday")
+M2 = "for/since duration with simple past for something still true" (e.g. "I lived here for 5 years")
+
+SESSION STATE shape:
+{ startedAt: number, secondsLeft: number (starts 600), taskIndex: 0-7, level: 1|2|3,
+  streakCorrect: number, wrongByTag: {M1,M2,form,marker}, askedIds: string[],
+  log: [{qid, format, level, correct, tag, rule, timeMs}] }
+
+RESULT shape: { qid, correct: boolean, tag: null|"M1"|"M2"|"form"|"marker",
+                explanationQuality?: "good"|"partial"|"poor" }
+
+DECISION shape: { rule: "HARDER"|"ALTERNATIVE"|"PREREQUISITE"|"CONTINUE",
+                  reason: string (learner-friendly, mentions their actual mistake),
+                  nextLevel: 1|2|3, lessonId?: "timeline"|"participles"|"markers",
+                  newState: SessionState }
+
+MODULE APIs (exact names):
+ src/engine.js   export decideNext(state, result) -> DECISION
+ src/store.js    export SESSION_SECONDS=600, loadSession(), saveSession(state),
+                 clearSession(), newSession()
+ src/bank.js     export BANK (Question[]), export pickFromBank({skill, level, askedIds})
+ src/ai.js       export getNextQuestion({skill, level, lastTag, askedIds}) -> Promiseexport evaluateExplanation({question, learnerText}) ->
+                   Promise<{verdict:"good"|"partial"|"poor", tag:null|"M1"|"M2", hint:string, source:"ai"|"fallback"}>
+ api/generate.js POST {skill, level, lastTag} -> Question JSON
+ api/evaluate.js POST {prompt, answer, modelExplanation, learnerText} -> {verdict, tag, hint}
+
+COMPONENT props:
+ Welcome({saved, onStart, onResume}) | Diagnostic via Task | Task({question, secondsLeft, taskIndex, onSubmit(answerText)})
+ Feedback({question, result, decision, onNext, onRetry}) | Lesson({lessonId, onDone})
+ Summary({state, onRestart}) | About() | Footer() always shows "23B1216"
+
+D: Store and timer
+store.js: localStorage key et617_23b1216_session, wrapped in try/catch (storage can fail). newSession() returns a fresh state with secondsLeft = 600. loadSession() returns null if missing, corrupt, or finished. useCountdown(initialSeconds, onEnd) is a hook that ticks every second, pauses when the tab is hidden, and exposes the seconds left so the parent can save them.
+
+Assistant:
+
+11/18/2026 18:38:54
+
+Used 2 tools
+
+Part D is written: src/store.js and src/useCountdown.js. I haven't run or tested either file.
+
+src/store.js
+
+It exports SESSION_SECONDS = 600, newSession(), saveSession(state), loadSession() and clearSession(), with the session fields exactly as in your shape.
+
+Every localStorage call is in try/catch, so blocked or full storage never crashes the app. saveSession returns true or false.
+
+loadSession() returns null if the key is missing, the JSON is corrupt, or the saved object doesn't have the expected fields. It also returns null once the session is finished (secondsLeft <= 0 or taskIndex >= 8), so Welcome won't offer to resume a finished run.
+
+src/useCountdown.js
+
+It is a hook, useCountdown(initialSeconds, onEnd), that returns the seconds left.
+
+It ticks once per second and stops while the tab is hidden. When the tab is visible again it carries on from where it was, with no catch-up for the time spent away.
+
+onEnd fires once when the count reaches 0. The latest onEnd is always used, so a changing callback won't restart the timer.
+
+initialSeconds is read only on mount. To restart the countdown, give the component a new key, for example one tied to startedAt.
+
+Assumptions for you to check
+
+Your spec didn't say which file holds the hook, so I put it in src/useCountdown.js as both a named and a default export.
+
+I added STORAGE_KEY as an extra named export. Nothing else in your shapes or names was changed.
+
+The parent should call saveSession({ ...state, secondsLeft }) on each tick or on each task change.
+
+User:
+
+11/18/2026 20:01:25
+
+In newSession() add three fields: masteredIds: [], askedIds: [], askedPrompts: [].
+In loadSession(), if a saved session lacks any of these, default them to [] so
+old saves don't crash.
+
+Assistant:
+
+11/18/2026 20:01:32
+
+Used 3 tools
+
+I've updated src/store.js as you asked. I haven't run it.
+
+newSession(): it now returns masteredIds: [] and askedPrompts: []. askedIds: [] was already there from the original version, so I didn't add it a second time.
+
+loadSession(): if askedIds, masteredIds or askedPrompts is missing from a saved session, or isn't an array, it is set to []. Old saves load normally instead of being discarded.
+
+Validation: the structural check used to reject any save without an askedIds array. I removed that requirement, because otherwise old saves would never have reached the defaulting step.
+
+Powered by Claude Exporter (https://www.ai-chat-exporter.net)

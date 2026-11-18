@@ -1,0 +1,598 @@
+Implement Adaptive Tutor Engine
+
+User: Anonymous
+Created: 11/18/2026 20:35:59
+Updated: 11/18/2026 20:36:00
+Exported: 11/18/2026 21:44:43
+Link: https://chatgpt.com/share/6afdbed7-8bec-83ee-8a22-f4a34c5aea5e
+
+## Prompt:
+18/11/2026, 18:37:49
+
+PROJECT: Adaptive English-tenses tutor (simple past vs present perfect) for a
+Class 9 Olympiad learner. Vite + React (plain JS, no TypeScript, no router, no UI
+library, no Redux). Roll number token in footer: 23B1216. Vercel deploy.
+Do NOT change names or shapes below. Only write the files assigned to you.
+
+QUESTION shape (bank and AI-generated):
+{ id, format: "mcq"|"correct"|"explain"|"transform", level: 1|2|3,
+  skill: "marker"|"form"|"meaning", prompt: string, options?: string[] (mcq only),
+  answer: string, acceptable?: string[], 
+  traps?: { [wrongOptionText]: "M1"|"M2"|"form"|"marker" },
+  modelExplanation: string,
+  feedback: { correct: string, M1: string, M2: string, other: string },
+  source: "bank"|"ai" }
+M1 = "past action + visible result => present perfect" (e.g. "I have seen him yesterday")
+M2 = "for/since duration with simple past for something still true" (e.g. "I lived here for 5 years")
+
+SESSION STATE shape:
+{ startedAt: number, secondsLeft: number (starts 600), taskIndex: 0-7, level: 1|2|3,
+  streakCorrect: number, wrongByTag: {M1,M2,form,marker}, askedIds: string[],
+  log: [{qid, format, level, correct, tag, rule, timeMs}] }
+
+RESULT shape: { qid, correct: boolean, tag: null|"M1"|"M2"|"form"|"marker",
+                explanationQuality?: "good"|"partial"|"poor" }
+
+DECISION shape: { rule: "HARDER"|"ALTERNATIVE"|"PREREQUISITE"|"CONTINUE",
+                  reason: string (learner-friendly, mentions their actual mistake),
+                  nextLevel: 1|2|3, lessonId?: "timeline"|"participles"|"markers",
+                  newState: SessionState }
+
+MODULE APIs (exact names):
+ src/engine.js   export decideNext(state, result) -> DECISION
+ src/store.js    export SESSION_SECONDS=600, loadSession(), saveSession(state),
+                 clearSession(), newSession()
+ src/bank.js     export BANK (Question[]), export pickFromBank({skill, level, askedIds})
+ src/ai.js       export getNextQuestion({skill, level, lastTag, askedIds}) -> Promise<Question>
+                 export evaluateExplanation({question, learnerText}) ->
+                   Promise<{verdict:"good"|"partial"|"poor", tag:null|"M1"|"M2", hint:string, source:"ai"|"fallback"}>
+ api/generate.js POST {skill, level, lastTag} -> Question JSON
+ api/evaluate.js POST {prompt, answer, modelExplanation, learnerText} -> {verdict, tag, hint}
+
+COMPONENT props:
+ Welcome({saved, onStart, onResume}) | Diagnostic via Task | Task({question, secondsLeft, taskIndex, onSubmit(answerText)})
+ Feedback({question, result, decision, onNext, onRetry}) | Lesson({lessonId, onDone})
+ Summary({state, onRestart}) | About() | Footer() always shows "23B1216"
+
+C: Engine
+
+Implement decideNext as pure, readable code (no side effects, short comments, because it will be explained in a viva). Rules: (1) correct and, if explanationQuality is given, not “poor”: streak+1; if streak ≥ 2 → HARDER (level+1, max 3, reset streak). (2) wrong with tag M1/M2 → ALTERNATIVE (lessonId “timeline”). (3) wrong with tag form/marker where wrongByTag[tag] reaches 2 → PREREQUISITE (lessonId “participles” for form, “markers” for marker). (4) otherwise CONTINUE. The reason string must reference the actual tag, e.g. “You used simple past with ‘for 5 years’, which describes something still true.” Wrong answers reset the streak. Append to log. Add a quick test file covering each of the 4 outcomes.
+
+## Response:
+18/11/2026, 18:37:51
+
+Planning the engine
+
+I’m implementing only the assigned engine and test files. I’m clarifying streak handling, wrong-answer counts, explanation quality, logging fields, and timing so the behavior matches the stated rules without touching unrelated project files.
+
+Planned the engine
+
+Resolving missing metadata
+
+I’m noticing the result shape doesn’t include format or timeMs, even though the log requires both. I’ll preserve the public API, read those fields when present at runtime, and use safe fallbacks rather than changing the declared shapes.
+
+Resolved missing metadata
+
+Worked for 39s
+
+For Part C, implement decideNext as a pure state-transition function. It will create a new state rather than mutate the input, update the mistake counters, append the result to the log, and return the appropriate decision.
+
+I'll use Node's built-in test runner (node:test), so no additional testing dependencies are required.
+
+1. src/engine.js
+
+const MAX_LEVEL = 3;
+
+export function decideNext(state, result) {
+  // Copy nested state to avoid mutating the original session.
+  const newState = {
+    ...state,
+    wrongByTag: { ...state.wrongByTag },
+    askedIds: [...state.askedIds],
+    log: [...state.log],
+  };
+
+  let rule = "CONTINUE";
+  let reason = "Let's try another question.";
+  let lessonId;
+  let nextLevel = state.level;
+
+  const { correct, tag, explanationQuality } = result;
+
+  if (correct && explanationQuality !== "poor") {
+    // Build a streak only when the answer and explanation are acceptable.
+    newState.streakCorrect += 1;
+
+    if (newState.streakCorrect >= 2) {
+      rule = "HARDER";
+      nextLevel = Math.min(MAX_LEVEL, state.level + 1);
+      newState.level = nextLevel;
+      newState.streakCorrect = 0;
+
+      reason =
+        "You've answered two questions correctly in a row. Let's try a harder level!";
+    } else {
+      reason = "Correct! Keep going to build your streak.";
+    }
+  } else {
+    // A wrong answer or a poor explanation breaks the streak.
+    newState.streakCorrect = 0;
+
+    if (!correct && tag) {
+      newState.wrongByTag[tag] += 1;
+
+      if (tag === "M1") {
+        rule = "ALTERNATIVE";
+        lessonId = "timeline";
+        reason =
+          "You used the simple past for an action with a present result. Let's revisit the timeline and why the present perfect is needed.";
+      } else if (tag === "M2") {
+        rule = "ALTERNATIVE";
+        lessonId = "timeline";
+        reason =
+          "You used simple past with a duration such as 'for 5 years', which describes something still true. Let's revisit the timeline.";
+      } else if (
+        (tag === "form" || tag === "marker") &&
+        newState.wrongByTag[tag] >= 2
+      ) {
+        rule = "PREREQUISITE";
+        lessonId = tag === "form" ? "participles" : "markers";
+
+        reason =
+          tag === "form"
+            ? "You've made mistakes with the past participle form more than once. Let's revise participles before moving ahead."
+            : "You've made mistakes identifying tense markers more than once. Let's revise the markers before moving ahead.";
+      } else if (tag === "form") {
+        reason =
+          "You made a mistake with the verb form. Let's practise past participles a little more.";
+      } else if (tag === "marker") {
+        reason =
+          "You missed an important tense marker. Let's practise recognising these clues.";
+      }
+    } else if (correct && explanationQuality === "poor") {
+      reason =
+        "Your answer is correct, but your explanation needs more work. Let's practise the rule once more.";
+    } else {
+      reason = "Not quite. Let's try another question and review the rule.";
+    }
+  }
+
+  // Record the attempt for the session summary.
+  newState.log.push({
+    qid: result.qid,
+    format: result.format,
+    level: result.level,
+    correct,
+    tag: correct ? null : tag,
+    rule,
+    timeMs: result.timeMs ?? 0,
+  });
+
+  return {
+    rule,
+    reason,
+    nextLevel,
+    ...(lessonId ? { lessonId } : {}),
+    newState,
+  };
+}
+
+One contract detail to be aware of: Your RESULT shape does not contain format, level, or timeMs, although the log requires them. The implementation should use state.level for the level and accept optional runtime metadata for format and timeMs. It must not invent the question format or attempt duration.
+
+Here is the small adjustment to the log entry:
+
+newState.log.push({
+    qid: result.qid,
+    format: result.format ?? null,
+    level: state.level,
+    correct,
+    tag: correct ? null : tag,
+    rule,
+    timeMs: result.timeMs ?? 0,
+  });
+
+For strict adherence to your original shapes, the caller should supply format and timeMs as additional runtime metadata, or the interface contract should be revised.
+
+2. src/engine.test.js
+
+Tests all four decision outcomes:
+
+HARDER - two consecutive correct answers.
+
+ALTERNATIVE - M1/M2 mistake.
+
+PREREQUISITE - repeated form/marker mistake.
+
+CONTINUE - ordinary mistake or first form/marker mistake.
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { decideNext } from "./engine.js";
+
+function makeState(overrides = {}) {
+  return {
+    startedAt: Date.now(),
+    secondsLeft: 500,
+    taskIndex: 2,
+    level: 1,
+    streakCorrect: 0,
+    wrongByTag: {
+      M1: 0,
+      M2: 0,
+      form: 0,
+      marker: 0,
+    },
+    askedIds: [],
+    log: [],
+    ...overrides,
+  };
+}
+
+// 1. HARDER: Two consecutive correct answers.
+test("HARDER: increases level after two correct answers", () => {
+  const state = makeState({ streakCorrect: 1 });
+
+  const decision = decideNext(state, {
+    qid: "q1",
+    correct: true,
+    tag: null,
+  });
+
+  assert.equal(decision.rule, "HARDER");
+  assert.equal(decision.nextLevel, 2);
+  assert.equal(decision.newState.level, 2);
+  assert.equal(decision.newState.streakCorrect, 0);
+});
+
+// 2. ALTERNATIVE: M1 mistake triggers timeline lesson.
+test("ALTERNATIVE: M1 mistake recommends timeline lesson", () => {
+  const state = makeState({ streakCorrect: 1 });
+
+  const decision = decideNext(state, {
+    qid: "q2",
+    correct: false,
+    tag: "M1",
+  });
+
+  assert.equal(decision.rule, "ALTERNATIVE");
+  assert.equal(decision.lessonId, "timeline");
+  assert.equal(decision.newState.streakCorrect, 0);
+  assert.equal(decision.newState.wrongByTag.M1, 1);
+});
+
+// 3. PREREQUISITE: Second form mistake triggers revision.
+test("PREREQUISITE: repeated form mistakes recommend participles", () => {
+  const state = makeState({
+    wrongByTag: {
+      M1: 0,
+      M2: 0,
+      form: 1,
+      marker: 0,
+    },
+  });
+
+  const decision = decideNext(state, {
+    qid: "q3",
+    correct: false,
+    tag: "form",
+  });
+
+  assert.equal(decision.rule, "PREREQUISITE");
+  assert.equal(decision.lessonId, "participles");
+  assert.equal(decision.newState.wrongByTag.form, 2);
+});
+
+// 4. CONTINUE: First marker mistake does not trigger a lesson.
+test("CONTINUE: first marker mistake allows another question", () => {
+  const state = makeState();
+
+  const decision = decideNext(state, {
+    qid: "q4",
+    correct: false,
+    tag: "marker",
+  });
+
+  assert.equal(decision.rule, "CONTINUE");
+  assert.equal(decision.lessonId, undefined);
+  assert.equal(decision.newState.wrongByTag.marker, 1);
+  assert.equal(decision.newState.streakCorrect, 0);
+});
+
+// Additional: Level must never exceed 3.
+test("HARDER: level is capped at 3", () => {
+  const state = makeState({
+    level: 3,
+    streakCorrect: 1,
+  });
+
+  const decision = decideNext(state, {
+    qid: "q5",
+    correct: true,
+    tag: null,
+  });
+
+  assert.equal(decision.rule, "HARDER");
+  assert.equal(decision.nextLevel, 3);
+});
+
+// Additional: Poor explanation does not build a streak.
+test("Poor explanation does not count as a correct streak", () => {
+  const state = makeState({
+    streakCorrect: 1,
+  });
+
+  const decision = decideNext(state, {
+    qid: "q6",
+    correct: true,
+    tag: null,
+    explanationQuality: "poor",
+  });
+
+  assert.equal(decision.rule, "CONTINUE");
+  assert.equal(decision.newState.streakCorrect, 0);
+});
+
+// Additional: Original state must remain unchanged.
+test("decideNext does not mutate the original state", () => {
+  const state = makeState({ streakCorrect: 1 });
+  const originalStreak = state.streakCorrect;
+  const originalLogLength = state.log.length;
+
+  decideNext(state, {
+    qid: "q7",
+    correct: true,
+    tag: null,
+  });
+
+  assert.equal(state.streakCorrect, originalStreak);
+  assert.equal(state.log.length, originalLogLength);
+});
+
+3. Running the tests
+
+From the project root:
+
+node --test src/engine.test.js
+
+Expected result:
+
+(7 tests passing)
+
+4. Viva explanation
+
+You should be able to explain these design decisions:
+
+Concept
+Explanation
+Pure function
+Does not modify the original session state.
+Spread operator
+Creates copies of state and nested objects.
+Streak
+Two acceptable consecutive correct answers trigger HARDER.
+Error tracking
+wrongByTag counts mistakes independently for each category.
+Alternative lesson
+M1/M2 errors indicate a conceptual timeline misunderstanding.
+Prerequisite
+Two form/marker mistakes trigger foundational revision.
+CONTINUE
+Default decision when no intervention is necessary.
+
+One particularly important viva question:
+
+Why do we increment wrongByTag[tag] before checking whether it has reached 2?
+
+Because the current mistake must count towards the threshold. If we check before incrementing, the prerequisite lesson would only trigger on the third mistake rather than the second.
+
+Implementation files covered:
+
+src/engine.js
+
+src/engine.test.js
+
+No other project files need to be changed for this part.
+
+## Prompt:
+18/11/2026, 18:55:01
+
+nandana@Nandanas-MacBook-Air-6 et617-endsem-23b1216 % node --test src/engine.test.js
+✔ HARDER: increases level after two correct answers (1.309791ms)
+✔ ALTERNATIVE: M1 mistake recommends timeline lesson (0.146458ms)
+✔ PREREQUISITE: repeated form mistakes recommend participles (0.117042ms)
+✔ CONTINUE: first marker mistake allows another question (0.104291ms)
+✔ HARDER: level is capped at 3 (0.109791ms)
+✔ Poor explanation does not count as a correct streak (0.097417ms)
+✔ decideNext does not mutate the original state (0.088042ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 140.291333
+
+## Response:
+18/11/2026, 18:55:02
+
+(All 7 tests passing)
+
+Great! Your decideNext implementation is working as expected.
+
+You've verified:
+
+All four decision paths: HARDER, ALTERNATIVE, PREREQUISITE, CONTINUE.
+
+Level cap at 3.
+
+Poor explanations reset the streak.
+
+Original session state remains unmodified.
+
+Part C: Engine — complete.
+
+One thing to remember before integration: ensure the caller passes the question's qid and any logging metadata (format, timeMs) consistently.
+
+You can move on to the next assigned module!
+
+## Prompt:
+18/11/2026, 19:32:26
+
+Confirm decideNext appends exactly ONE log entry, filling qid, format, level,
+correct, tag, rule, timeMs (take format and timeMs from result, add them to the
+RESULT shape if missing). Also confirm a wrong result with tag M1/M2 returns
+ALTERNATIVE. Return only changed lines.
+
+## Response:
+18/11/2026, 19:32:27
+
+// RESULT shape: add
+format: string,
+timeMs: number,
+
+// Log entry inside decideNext:
+newState.log.push({
+  qid: result.qid,
+  format: result.format,
+  level: state.level,
+  correct,
+  tag: correct ? null : tag,
+  rule,
+  timeMs: result.timeMs,
+});
+
+// M1/M2 handling:
+if (tag === "M1" || tag === "M2") {
+  rule = "ALTERNATIVE";
+  lessonId = "timeline";
+  reason =
+    tag === "M1"
+      ? "You used simple past for an action with a present result. Let's revisit the timeline."
+      : "You used simple past with a duration describing something still true. Let's revisit the timeline.";
+}
+
+One log entry is appended per invocation. Both M1 and M2 wrong answers return ALTERNATIVE.
+
+## Prompt:
+18/11/2026, 19:37:59
+
+give updated engine.js
+
+## Response:
+18/11/2026, 19:38:00
+
+Here is the complete updated src/engine.js, with exactly one log entry appended per invocation, format and timeMs taken from result, and both M1/M2 errors triggering the timeline lesson.
+
+const MAX_LEVEL = 3;
+
+export function decideNext(state, result) {
+  // Copy nested state to avoid mutating the original session.
+  const newState = {
+    ...state,
+    wrongByTag: { ...state.wrongByTag },
+    askedIds: [...state.askedIds],
+    log: [...state.log],
+  };
+
+  let rule = "CONTINUE";
+  let reason = "Let's try another question.";
+  let lessonId;
+  let nextLevel = state.level;
+
+  const { correct, tag, explanationQuality } = result;
+
+  if (correct && explanationQuality !== "poor") {
+    // Build a streak only when the answer and explanation are acceptable.
+    newState.streakCorrect += 1;
+
+    if (newState.streakCorrect >= 2) {
+      rule = "HARDER";
+      nextLevel = Math.min(MAX_LEVEL, state.level + 1);
+      newState.level = nextLevel;
+      newState.streakCorrect = 0;
+
+      reason =
+        "You've answered two questions correctly in a row. Let's try a harder level!";
+    } else {
+      reason = "Correct! Keep going to build your streak.";
+    }
+  } else {
+    // A wrong answer or a poor explanation breaks the streak.
+    newState.streakCorrect = 0;
+
+    if (!correct && tag) {
+      newState.wrongByTag[tag] += 1;
+
+      if (tag === "M1" || tag === "M2") {
+        rule = "ALTERNATIVE";
+        lessonId = "timeline";
+
+        reason =
+          tag === "M1"
+            ? "You used simple past for an action with a present result. Let's revisit the timeline."
+            : "You used simple past with a duration describing something still true. Let's revisit the timeline.";
+      } else if (
+        (tag === "form" || tag === "marker") &&
+        newState.wrongByTag[tag] >= 2
+      ) {
+        rule = "PREREQUISITE";
+        lessonId = tag === "form" ? "participles" : "markers";
+
+        reason =
+          tag === "form"
+            ? "You've made mistakes with past participle forms more than once. Let's revise participles."
+            : "You've made mistakes identifying tense markers more than once. Let's revise the markers.";
+      } else if (tag === "form") {
+        reason =
+          "You made a mistake with the verb form. Let's practise past participles a little more.";
+      } else if (tag === "marker") {
+        reason =
+          "You missed an important tense marker. Let's practise recognising these clues.";
+      }
+    } else if (correct && explanationQuality === "poor") {
+      reason =
+        "Your answer is correct, but your explanation needs more work. Let's practise the rule once more.";
+    } else {
+      reason = "Not quite. Let's try another question and review the rule.";
+    }
+  }
+
+  // Append exactly one log entry for this attempt.
+  newState.log.push({
+    qid: result.qid,
+    format: result.format,
+    level: state.level,
+    correct,
+    tag: correct ? null : tag,
+    rule,
+    timeMs: result.timeMs,
+  });
+
+  return {
+    rule,
+    reason,
+    nextLevel,
+    ...(lessonId ? { lessonId } : {}),
+    newState,
+  };
+}
+
+Updated RESULT shape: Add these two fields:
+
+format: "mcq" | "correct" | "explain" | "transform",
+timeMs: number,
+
+Your existing seven tests should continue to pass.
+
+If you want, I can:
+
+Explain how decideNext handles repeated form/marker mistakes
+
+Provide test cases covering M1 and M2 error decisions
+
+Detail how streak increments and triggers HARDER decisions
+
+
+
+Powered by ChatGPT Exporter (https://www.chatgptexporter.com)

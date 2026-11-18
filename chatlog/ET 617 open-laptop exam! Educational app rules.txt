@@ -1,0 +1,1819 @@
+ET 617 open-laptop exam: Educational app rules
+
+Created: 11/18/2026 20:39:43
+Updated: 11/18/2026 21:39:43
+Exported: 11/18/2026 21:42:23
+Link: https://claude.ai/share/80521fd2-56e2-42a9-96fb-750f4c778f82
+
+User:
+
+11/16/2026 14:21:30
+
+The ET 617 End-Semester Examination will be conducted as an Open-Laptop Examination. You will be expected to design, develop, and host a working educational application within the examination period.
+
+The problem statement will be provided at the beginning of the examination.
+
+You must develop a functional educational application and deploy it to an accessible URL.
+
+You may use your laptop, internet, documentation, AI tools, and development platforms.
+
+Your application must be accessible and demonstrable in 2 hours
+
+Applications will be evaluated based on functionality, educational relevance, design, and implementation.
+
+You should be prepared to demonstrate your application and explain your design decisions.
+
+Academic Integrity and Code Originality
+
+This is an individual examination. Collaboration, sharing code, or discussing solutions with other students during the examination is strictly prohibited.
+
+Reusing code from your ET 617 course project, other group projects, previous assignments, GitHub repositories, or any pre-existing application is strictly prohibited.
+
+You may use AI tools to generate code during the examination. However, you must be able to explain the implementation and demonstrate that you understand the generated code.
+
+All submitted code will undergo plagiarism and similarity checks against the code repositories submitted by every ET 617 project group, as well as other available sources.
+
+Version history and development activity will also be examined to verify that the application was developed during the examination period.
+
+Any evidence of unauthorized code reuse, collaboration, or misrepresentation of work will be treated as an academic integrity violation and handled according to institute regulations.
+
+How to Prepare
+
+Bring your laptop and charger.
+
+Ensure your development environment, GitHub account, and hosting platform are configured and working beforehand.
+
+Revise the concepts covered in ET 617, particularly educational application design, learner personas, instructional content, UI/UX, and evaluation.
+
+Familiarize yourself with your preferred development tools and deployment process.
+
+Important: You may prepare your development environment in advance, but the application and its code must be developed during the examination. Do not bring pre-written code, templates, or previously developed applications for reuse.
+Further examination-specific instructions will be provided on the day.
+
+Assistant:
+
+11/16/2026 14:21:41
+
+Thanks for sharing the exam briefing. Since the problem statement isn't out yet and the rules say the application must be built during the exam, I can help you prepare your workflow, not pre-write any app code. Here's how I'd use the time before and during the exam.
+
+What's safe to prepare now (setup, not code)
+
+Confirm your GitHub account, Git credentials, and SSH/HTTPS push all work.
+
+Pick one hosting platform and test deploying a throwaway "hello world" site (Vercel, Netlify, GitHub Pages, or Render). Know where the live URL appears and how long a deploy takes.
+
+Decide on one stack you know well. For a 2-hour build, a static front end (plain HTML/JS or React via Vite) with no backend is the lowest-risk option. Add a backend or database only if the problem demands it.
+
+Check that your AI tool of choice is logged in and working, and that your laptop battery, charger, and internet backup (phone hotspot) are ready.
+
+Suggested 2-hour time plan
+
+0:00-0:10 Read the problem statement twice. Identify the learner, the learning goal, and what "success" looks like.
+
+0:10-0:20 Define a minimal persona (age, prior knowledge, device, context), one or two learning objectives, and the core feature set. Cut scope hard.
+
+0:20-0:30 Create the repo, make the first commit, and deploy a skeleton so you have a live URL early. Commit often afterward, since version history is part of the integrity check.
+
+0:30-1:30 Build the core learning loop: instructional content, practice or interaction, feedback, and progress tracking.
+
+1:30-1:45 Polish the UI: readable typography, clear navigation, accessibility basics (contrast, keyboard use, mobile layout).
+
+1:45-2:00 Final deploy, test the live URL on a fresh browser or phone, and write a short README with your design rationale.
+
+What evaluators will likely look for
+
+Educational relevance: a clear learning objective and content that actually teaches it, not just a quiz shell.
+
+Pedagogy: immediate and meaningful feedback, scaffolding or hints, a progression from easy to hard, and a way to check understanding.
+
+Learner fit: design choices you can tie back to your persona.
+
+Functionality: it works on the live URL, with no broken flows.
+
+Design: clean, simple, accessible UI.
+
+Evaluation: some way to show learning, such as scores, mastery tracking, or reflection prompts.
+
+Preparing for the demo and viva
+
+Write down in advance a 60-second demo script structure: problem, learner, walkthrough, one design decision, one limitation.
+
+When using AI to generate code during the exam, read through each part and be able to say what it does. Keep the architecture simple enough that you can explain every file.
+
+Make small, meaningful commits with clear messages so your history shows genuine incremental work.
+
+Revision topics worth refreshing
+Learner personas, instructional design models (e.g., ADDIE, Gagné's events of instruction), formative vs. summative assessment, feedback types, cognitive load, UX heuristics, and accessibility basics.
+
+Once you have the actual problem statement, share it and I can help you with scoping, persona and learning-objective design, content structure, and explaining design decisions. For the code itself, check what the exam's specific instructions say about AI tool usage on the day. The general rules you posted allow it, as long as you understand and can explain what's generated.
+
+Would you like a checklist for the pedagogy and UX side, or practice questions for the viva?
+
+User:
+
+11/16/2026 14:24:25
+
+how to connect git to vs code?
+
+Assistant:
+
+11/16/2026 14:24:31
+
+Here's the setup, start to finish. VS Code has Git support built in, but it needs Git installed on your laptop.
+
+1. Install Git
+
+Download from git-scm.com and install with the defaults (Windows/macOS/Linux all supported).
+
+Check it worked: open a terminal and run git --version.
+
+2. Tell Git who you are (one time)
+
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+
+Use the same email that's on your GitHub account so commits are linked to you.
+
+3. Open your project in VS Code
+
+File > Open Folder and pick your project folder.
+
+Click the Source Control icon in the left sidebar (the branch-shaped icon, or press Ctrl+Shift+G).
+
+Click Initialize Repository. VS Code now tracks changes in that folder.
+
+4. Sign in to GitHub from VS Code
+
+Click the Accounts icon (bottom-left, person silhouette) > Sign in with GitHub.
+
+A browser window opens; authorize VS Code, then return to the editor.
+
+This handles authentication, so you won't need to type passwords or set up SSH keys.
+
+5. Connect to a GitHub repository
+
+Easiest: create an empty repo on github.com first, then copy its URL.
+
+In VS Code, open the terminal (`Ctrl+``) and run:
+
+git remote add origin https://github.com/yourusername/your-repo.git
+git branch -M main
+
+Alternatively, once your repo is initialized, use Publish to GitHub in the Source Control panel, which creates the repo and links it in one step.
+
+6. The daily workflow
+
+Edit files. Changed files appear in the Source Control panel.
+
+Click + next to a file (or on "Changes") to stage it.
+
+Type a message in the box and click Commit.
+
+Click Sync Changes or Push to upload to GitHub.
+
+Quick troubleshooting
+
+"Git not found": restart VS Code after installing Git, or check that Git is on your PATH.
+
+Push asks for credentials repeatedly: sign out and back in through the Accounts menu.
+
+Wrong author on commits: re-run the two git config commands above.
+
+For your exam: do a full test run today. Create a dummy repo, make a small change, commit, push, and confirm it appears on GitHub. During the exam, commit and push frequently with meaningful messages, since your version history is part of the integrity check.
+
+If you hit a specific error message while setting this up, paste it here and I'll help you sort it out.
+
+User:
+
+11/16/2026 14:31:21
+
+this is my git repo https://github.com/Nandana-2/ET617_endsem.git, but git remote add origin https://github.com/Nandana-2/ET617_endsem.git
+fatal: not a git repository (or any of the parent directories): .git
+
+Assistant:
+
+11/16/2026 14:31:27
+
+That error means the folder you're in isn't a Git repository yet. git remote add only works inside one, so you need to initialize it first (or clone the repo instead).
+
+Option A: Initialize in your current folder
+
+Run these in the VS Code terminal, inside your project folder:
+
+git init
+git remote add origin https://github.com/Nandana-2/ET617_endsem.git
+git branch -M main
+
+Check it worked:
+
+git remote -v
+
+You should see the URL listed twice (fetch and push).
+
+Option B: Clone the repo (often simpler)
+
+Since the repo already exists on GitHub, you can clone it into a new folder:
+
+git clone https://github.com/Nandana-2/ET617_endsem.git
+
+Then in VS Code: File > Open Folder > select the new ET617_endsem folder. It's already connected to GitHub, so no git init or git remote add is needed.
+
+Then make your first test commit and push:
+
+git add .
+git commit -m "Initial commit"
+git push -u origin main
+
+(With Option A you need at least one file in the folder before committing. Create a README.md if it's empty.)
+
+If the push fails:
+
+"Updates were rejected" / unrelated histories: the GitHub repo already has files (e.g. a README) that your local folder doesn't. Run git pull origin main --allow-unrelated-histories, then push again.
+
+Branch name mismatch: if GitHub's default branch is master, use git push -u origin main anyway after the git branch -M main step, or check the branch name shown on the repo page.
+
+Credential prompt: sign in through the browser window that opens, or via the Accounts icon in VS Code.
+
+Do this test now, before the exam. If you get any other error, paste it here and I'll help.
+
+User:
+
+11/17/2026 15:55:21
+
+nice, now give some where I can host this?
+
+Assistant:
+
+11/17/2026 15:55:30
+
+Since your code is already on GitHub, the easiest options are ones that deploy straight from your repo. Here are the best fits for a 2-hour exam.
+
+1. GitHub Pages (simplest, no extra account)
+
+Best for: static sites (plain HTML/CSS/JS, or a built React/Vite app).
+
+Steps: repo on GitHub > Settings > Pages > Source: "Deploy from a branch" > pick main and / (root) > Save.
+
+URL: https://nandana-2.github.io/ET617_endsem/
+
+Takes 1-2 minutes per update. If your app uses React/Vite, you'll need to deploy the dist build output, which is a bit more setup, so plain HTML/JS is faster here.
+
+2. Vercel (best for React/Vite/Next.js)
+
+Sign in with GitHub at vercel.com > Add New > Project > import ET617_endsem > Deploy.
+
+Every git push redeploys automatically, and you get a live URL in about a minute.
+
+Detects most frameworks automatically, so there's little configuration.
+
+3. Netlify (equally easy, also good for plain static sites)
+
+Sign in with GitHub at netlify.com > Add new site > Import from Git > choose the repo.
+
+For plain HTML, leave the build command empty and set the publish directory to /.
+
+Also supports drag-and-drop of a folder if you ever need a quick manual deploy.
+
+4. Cloudflare Pages
+
+Similar workflow to Vercel and Netlify, with fast global delivery. Good alternative if one of the others misbehaves.
+
+5. Render (if you need a backend)
+
+Use this only if the problem requires a server (Node/Flask) or a database. Free tier services can take 30-60 seconds to wake up, which is risky for a live demo.
+
+My recommendation for the exam
+
+Static front end, deployed on Vercel or Netlify for auto-deploy on push, with GitHub Pages as your backup.
+
+Avoid anything that needs a backend unless the problem statement truly requires it.
+
+Do this before the exam
+
+Push a simple index.html saying "Hello" to your repo.
+
+Deploy it on your chosen platform and open the live URL on your phone.
+
+Make a small edit, push, and time how long the update takes to appear.
+
+Note down your URL and where the platform's deploy logs are, so you can debug quickly.
+
+One caution: deployed files must be created during the exam, so deleting the test index.html and starting fresh on the day is a good idea. That keeps your version history clean.
+
+Want a short walkthrough for any one of these?
+
+User:
+
+11/18/2026 1:20:02
+
+how to host on Vercel?
+
+Assistant:
+
+11/18/2026 1:20:10
+
+Here's the full walkthrough for deploying your repo on Vercel.
+
+Method 1: Dashboard (recommended for the exam)
+
+Go to vercel.com and click Sign Up, then choose Continue with GitHub. Authorize Vercel.
+
+On your dashboard, click Add New... > Project.
+
+Under Import Git Repository, find ET617_endsem. If it doesn't appear, click Adjust GitHub App Permissions and grant Vercel access to that repo.
+
+Click Import, then check the settings:
+Framework Preset: Vercel usually auto-detects it. For plain HTML/JS choose Other. For React with Vite choose Vite.
+
+Build Command / Output Directory: leave the defaults for a framework. For plain HTML, leave the build command empty.
+
+Root Directory: leave as ./ unless your code is in a subfolder.
+
+Click Deploy. After about a minute you get a live URL like https://et617-endsem.vercel.app.
+
+After that, it's automatic
+
+Every git push to main triggers a new deployment.
+
+You can watch builds under the Deployments tab, and click any deployment to see its build logs if something fails.
+
+Method 2: Vercel CLI (backup, if the dashboard import gives trouble)
+
+npm install -g vercel
+vercel login
+vercel
+
+Answer the prompts (the defaults are fine), and it gives you a preview URL. Run vercel --prod to deploy to the production URL.
+
+Common problems
+
+404 on the live URL: for plain HTML, make sure your file is named index.html and sits in the root folder.
+
+Build fails: open the deployment's build logs. Usually it's a missing dependency or the wrong output directory (Vite builds to dist).
+
+Repo not listed: fix GitHub permissions as in step 3.
+
+Blank page with a React/Vite app: check the browser console (F12) for errors, and confirm the preset is set to Vite.
+
+Changes not showing: confirm you pushed (not just committed), then check the Deployments tab for the new build.
+
+Do this today
+
+Push a simple index.html with "Hello" to your repo.
+
+Import it on Vercel and open the live URL on your phone.
+
+Edit the text, push, and time how long the update takes to go live.
+
+Delete the test file before the exam so your version history reflects work done during it.
+
+If you get stuck at any step, tell me which one and any error text you see.
+
+User:
+
+11/18/2026 18:11:53
+
+Assistant:
+
+11/18/2026 18:12:03
+
+This is the real exam sheet, so here is what matters most right now.
+
+Fix first: your repo name
+The rules require a repo named et617-endsem-<rollno>, created after the exam starts. Your existing ET617_endsem has the wrong name and was made earlier. Create a new repo with the correct name now and don't reuse the old one (it could look like pre-exam work). Your Vercel URL must also be et617-<rollno>.vercel.app, so set that project name when you import.
+
+Checkpoints
+
+First 10 min: pick your card (P, T, L, C, plus your roll number) and enter it in the Moodle Excel sheet. Take a screenshot of it, because the Moodle submission needs it.
+
+By 0:30: commit DESIGN.md (problem, 3 learning outcomes, persona, content plan).
+
+By 1:00: first deployment live.
+
+Commit at least every 30 minutes.
+
+1:35-1:55: write the report (Identity card, D1 to D8, AI-use log).
+
+1:55-2:00: submit on Moodle with the URL, repo link, PDF report, AI chat links, and card screenshot.
+
+What the app needs
+
+At least 5 connected screens or states.
+
+Your identity token (roll number) in the footer of every screen and on an About screen.
+
+Your C constraint visibly working.
+
+At least 5 tasks in 2 or more formats, with feedback for correct answers and for each of 2 misconceptions.
+
+Two contrasting paths, correct learner vs. misconception learner, where the system responds differently.
+
+Your problem's design challenge answered and visibly demonstrated in the app.
+
+No API keys in the repo. Use Vercel environment variables.
+
+A labelled fallback with sample outputs if an AI call fails.
+
+Grading hints from the rubric at the end
+
+Simple, age-appropriate language for your learner.
+
+Content that lets learners discover and then fix their misconceptions.
+
+Conversational tone and highlighted key points.
+
+Adaptivity based on performance (and profile).
+
+Clear, consistent interface cues.
+
+Topic-specific tools, such as a number line for integers.
+
+Design fit and your judgement in using AI carry more marks than visual polish, so keep the app simple and well reasoned.
+
+To start, tell me your card:
+
+Roll number
+
+P (problem), T (topic), L (learner context), C (constraint)
+
+Once I have it, I can help draft DESIGN.md (outcomes, persona, misconceptions, content plan), pick the simplest architecture that satisfies your constraint, and then build the app step by step. Save your AI chats as you go, since the AI-use log is graded and this includes any chats you use during the exam.
+
+User:
+
+11/18/2026 18:18:26
+
+23b1216
+
+Adaptive tutor with automatic question generation,  English tenses: simple past vs present perfect, High-achieving learner preparing for an Olympiad and bored by routine practice, 10-minute sessions
+
+Assistant:
+
+11/18/2026 18:18:48
+
+Your card is P4 · T7 · L6 · C4 · ID 23B1216.
+
+Do this in the first 10 minutes
+
+Enter the card in the Moodle Excel sheet and screenshot it (this screenshot is a submission item).
+
+Create a new GitHub repo named et617-endsem-23b1216. Don't reuse ET617_endsem.
+
+Name the Vercel project et617-23b1216, so the URL is et617-23b1216.vercel.app.
+
+How your card shapes the design
+
+Field
+Design implication
+P4 Adaptive tutor
+Needs 3+ question formats, explanation evaluation, misconception diagnosis, and a visible decision rule with all three outcomes shown
+T7 Simple past vs present perfect
+The key contrast is finished time ("yesterday", "in 2019") vs connection to now ("already", "since", "ever")
+L6 Olympiad learner, bored by routine
+Skip easy drills. Use diagnostic-first, trap sentences, error hunts, and "why is this wrong?" reasoning
+C4 10-minute sessions
+A visible timer, a fixed 8-task sequence, and save and resume (localStorage)
+
+Draft DESIGN.md (commit by 0:30; edit it so it's in your own words)
+
+# DESIGN.md — ET 617 End-Sem | 23B1216
+Card: P4 Adaptive tutor | T7 English tenses (simple past vs present perfect) | L6 Olympiad learner | C4 10-minute sessions
+
+## Problem
+Olympiad-level ESL learners can usually form both tenses but choose the wrong one
+when time markers are implicit or when "finished vs still relevant" is subtle.
+Routine fill-in-the-blank drills bore them and hide these errors.
+The app gives short, adaptive, reasoning-heavy practice that targets the learner's own mistakes.
+
+## Learning outcomes
+1. Explain why a given sentence needs simple past or present perfect (finished time vs link to now).
+2. Correct tense errors in sentences with misleading time markers.
+3. Compare two sentences and predict how their meaning differs (e.g. "I lived in Pune" vs "I have lived in Pune").
+
+## Persona
+Aarav, 14, Class 9, preparing for an English Olympiad. Strong vocabulary, fast reader,
+knows verb forms. Phone/laptop, ~10 minutes between study blocks. Motivated by rank and hard problems.
+Misconceptions:
+- M1: "Past action + any result = present perfect" -> "I have seen him yesterday"
+- M2: "Duration with for/since can use simple past" -> "I lived here for 5 years" (still lives here)
+
+## Question formats
+1. Trap MCQ  2. Error correction (type the fixed sentence)  3. Explain-why (short text)
+4. Sentence transformation / write your own
+
+## Adaptive decision rule (after every answer)
+- Correct + good explanation x2 in a row  -> HARDER (subtler markers, no cue words)
+- Wrong, tagged M1 or M2                  -> ALTERNATIVE EXPLANATION (timeline view, new example), then retry
+- Wrong 2x on form/participle or marker recognition -> PREREQUISITE mini-lesson (irregular participles / time-marker sort)
+
+## C4 (10-minute sessions)
+8 tasks, visible countdown, progress dots, auto-save to localStorage, "Resume where you left off".
+
+## AI plan
+Vercel serverless function: generates the next question and evaluates explanations.
+Output checked against JSON schema + answer-key rules; falls back to the built-in bank if the call fails (labelled).
+
+Suggested architecture (simple and explainable in the viva)
+
+Plain HTML/CSS/JS front end plus one /api serverless function for the AI calls. No framework to debug.
+
+A hand-written question bank (about 15 items across the 4 formats, tagged by misconception and level). This is your content for D3 and your fallback.
+
+The decision rule as a short, readable function in JS. Evaluators will ask about it in the viva.
+
+A teacher/log view isn't needed (that's C5), but log each answer (level, tag, correct, time) in localStorage for D8.
+
+API key only in Vercel environment variables.
+
+Screens (D4 needs 5+)
+
+Welcome and resume
+
+Diagnostic (2-3 quick items)
+
+Task screen (timer, progress)
+
+Feedback screen (shows which rule fired: harder, alternative, or prerequisite)
+
+Mini-lesson/timeline screen
+
+Session summary
+
+About (shows 23B1216)
+
+Put 23B1216 in the footer of every screen.
+
+Next steps
+
+Create the repo, paste in the DESIGN.md above (adjusted), commit, and push.
+
+Tell me when that's done and I'll write the question bank, with the correct feedback and the M1 and M2 feedback, in your voice.
+
+Then we build the app, deploy a skeleton by 1:00, and I'll help with the report sections as time allows.
+
+Keep every AI chat link, including this one, for the AI-use log. Should I write the question bank first?
+
+User:
+
+11/18/2026 18:24:37
+
+how do I commit Design.md?
+
+Assistant:
+
+11/18/2026 18:24:42
+
+Here's the quickest way, using the terminal in VS Code. Do this inside your new repo folder (et617-endsem-23b1216).
+
+1. Save the file
+
+In VS Code, create a file named exactly DESIGN.md in the root of the repo folder.
+
+Paste in the content and press Ctrl+S.
+
+2. Commit and push (terminal, Ctrl+`)
+
+git add DESIGN.md
+git commit -m "Add DESIGN.md: problem, outcomes, persona, content plan"
+git push -u origin main
+
+Or use the VS Code UI
+
+Open Source Control (Ctrl+Shift+G).
+
+Click + next to DESIGN.md to stage it.
+
+Type a message in the box, e.g. Add DESIGN.md, and click Commit.
+
+Click Sync Changes (or Publish Branch the first time).
+
+If you haven't connected the new repo yet
+
+git init
+git remote add origin https://github.com/Nandana-2/et617-endsem-23b1216.git
+git branch -M main
+
+Then run the commit and push commands above. (If you cloned the repo instead, skip these three lines.)
+
+Check it worked
+
+Open the repo on github.com and confirm DESIGN.md is listed.
+
+Look at the commit time. It needs to be before 0:30 into the exam.
+
+If something fails
+
+"nothing to commit": the file isn't saved or is in the wrong folder. Check with git status.
+
+"Updates were rejected": the repo already has a README. Run git pull origin main --allow-unrelated-histories, then push again.
+
+Author/identity error: run the git config --global user.name and user.email commands from earlier.
+
+Once it's pushed, tell me and I'll write the question bank next.
+
+User:
+
+11/18/2026 18:30:37
+
+okay, now lets start building the app, give the architecture of the app.
+
+Assistant:
+
+11/18/2026 18:30:57
+
+Here's an architecture that's simple enough to explain every file in the viva.
+
+Overview
+
+A static front end (plain HTML/CSS/JS, no framework) plus two small serverless functions on Vercel for the AI calls. All the adaptive logic lives in the front end as readable JS, and the AI is an add-on with a built-in fallback.
+
+Browser (screens + engine + localStorage)
+   │
+   ├── bank.js     hand-written questions (content + fallback)
+   ├── engine.js   decision rule, misconception diagnosis
+   └── fetch ──►  /api/generate   (AI writes next question)
+                  /api/evaluate   (AI judges explanation)
+                       │
+                  validators → if invalid or fails → fallback to bank / rule-based check
+
+Repo structure
+
+et617-endsem-23b1216/
+├── index.html        all screens as <section> blocks, footer with 23B1216
+├── css/style.css     mobile-friendly, timer bar, feedback colours
+├── js/
+│   ├── app.js        screen router, event handlers, timer
+│   ├── engine.js     adaptive decision rule + misconception tagging
+│   ├── bank.js       ~15 tagged questions + feedback text
+│   ├── store.js      save/resume + answer log (localStorage)
+│   └── ai.js         calls /api, validates, falls back
+├── api/
+│   ├── generate.js   returns one new question as JSON
+│   └── evaluate.js   returns verdict + misconception tag for an explanation
+├── DESIGN.md
+└── README.md         (templates/libraries used, AI disclosure)
+
+API keys go only in Vercel environment variables, never in the repo.
+
+Data model
+
+Question (same shape for bank and AI-generated):
+
+{
+  id: "q07", format: "mcq|correct|explain|transform",
+  level: 1-3, skill: "marker|form|meaning",
+  prompt: "...", options: [...],     // mcq only
+  answer: "...", 
+  traps: { M1: "...", M2: "..." },   // wrong answers mapped to misconception
+  feedback: { correct: "...", M1: "...", M2: "...", other: "..." },
+  source: "bank|ai"
+}
+
+Session state (saved to localStorage after every answer):
+
+{ startedAt, secondsLeft, taskIndex (0-7), level, 
+  streakCorrect, wrongByTag: {M1:0, M2:0, form:0, marker:0},
+  log: [{qid, format, level, correct, tag, rule, timeMs}] }
+
+Screen flow (D4: 5+ connected states)
+
+Welcome/Resume → Diagnostic (2 items) → Task → Feedback ──► Task (next)
+                                                  │
+                                                  ├─► Mini-lesson (timeline) → Retry
+                                                  └─► Summary (after task 8 or timer end) → About
+
+Every screen has the footer: 23B1216.
+
+Decision rule (engine.js, the core of P4)
+
+Runs after every answer and returns one of three outcomes:
+
+if correct AND (explanation good, if format = explain):
+    streak++
+    if streak >= 2 → HARDER      (level+1, fewer cue words)
+elif wrong with tag M1 or M2     → ALTERNATIVE  (timeline explanation + new example, then retry)
+elif wrong on form/marker twice  → PREREQUISITE (mini-lesson: participles or time-marker sort)
+else                             → same level, new item
+
+The feedback screen shows a label ("Rule fired: Alternative explanation, because you used simple past with for 5 years"). That makes the decision rule visible to evaluators.
+
+AI features and how they're checked (D6)
+
+Feature
+Input
+Output
+Check before showing
+Fallback
+Question generation
+target skill, level, last misconception
+question JSON
+schema check, plus a rule check (e.g. "yesterday/ago/in 2019" ⇒ answer must be simple past; "already/yet/since/ever" ⇒ present perfect)
+next item from bank.js, labelled "Practice set"
+Explanation evaluation
+question, model answer, learner's text
+{verdict, misconception, hint}
+verdict must be in allowed set; hint must not contain the answer
+keyword check against the model answer ("finished", "now", "still", "result")
+
+The deterministic marker check is a good judgement point for the report, because it shows you don't trust raw AI output.
+
+C4: 10-minute sessions
+
+8 tasks, a visible 10:00 countdown and progress dots.
+
+Auto-save after each answer. If the learner closes the tab, Welcome shows "Resume (task 5 of 8, 4:12 left)".
+
+Timer end → Summary screen, not an abrupt stop.
+
+Hosting
+
+Vercel project et617-23b1216, connected to the GitHub repo. Static files are served from root and /api/*.js run as serverless functions automatically. Set the AI key under Project Settings → Environment Variables.
+
+Build order (to hit the checkpoints)
+
+Skeleton: index.html with all 7 screens, the footer, and router. Deploy by 1:00.
+
+Content: bank.js with tagged questions and feedback (D3).
+
+Engine and flow: tasks, feedback, decision rule, timer, save/resume.
+
+AI: /api functions, validators, fallback.
+
+Test both D5 paths on the live URL, take screenshots, then write the report.
+
+Commit after each step with a clear message.
+
+Which AI provider do you want to use for the /api functions (e.g. Anthropic, Gemini, OpenAI)? Whichever has a key you can use during the exam is fine, and then I'll start with step 1, the skeleton.
+
+User:
+
+11/18/2026 18:31:53
+
+we can use react for ui, and do we need backend Data base?
+
+Assistant:
+
+11/18/2026 18:32:01
+
+React works fine, and no, you don't need a backend database. Here's how each choice affects your plan.
+
+Database: not needed
+
+Everything the exam asks for can live in the browser:
+
+Need
+Where it lives
+Question bank (D3, fallback)
+bank.js, static file
+Save and resume (C4)
+localStorage
+Answer log for D8
+localStorage (shown on the Summary screen)
+AI calls
+Vercel serverless functions (stateless, no storage)
+
+Why skip a database: setup time, auth, and schema bugs all eat into a 2-hour budget, and nothing in P4 or C4 requires cross-device data. Learner data stays on the device, which is also an easy privacy point for the report.
+
+What you give up: progress doesn't sync across devices, and a teacher can't see logs. Neither is required for your card (C5 is the teacher constraint, not yours). In D8, say that in a real deployment you would send the same log to a database. That shows you considered it.
+
+React: fine, with a few cautions
+
+Use Vite + React, since Vercel auto-detects it. Create it with npm create vite@latest (choose React) and name the template in your README, because the rules say a starter template is fine if you name it.
+
+Keep it simple so you can explain it in the viva:
+
+Use useState and useReducer only. Skip Redux, routers, and UI libraries.
+
+Treat screens as a screen state variable ("welcome" | "diagnostic" | "task" | "feedback" | "lesson" | "summary" | "about"), not as routes.
+
+Keep engine.js and bank.js as plain JS modules outside React, so the decision rule is easy to read and show.
+
+Put the footer with 23B1216 in a Layout component so it appears on every screen automatically.
+
+Updated structure:
+
+src/
+  App.jsx            screen switch + session reducer
+  components/        Welcome, Task, Feedback, Lesson, Summary, About, Footer
+  engine.js          decision rule
+  bank.js            tagged questions
+  store.js           localStorage save/resume
+  ai.js              calls /api, validates, falls back
+api/
+  generate.js
+  evaluate.js
+
+Vercel settings: Framework Preset = Vite, build npm run build, output dist. The /api folder still works as serverless functions at the repo root.
+
+One gotcha: vercel dev or the Vercel deploy is needed to test /api locally. Plain npm run dev won't run those functions. Since time is tight, build the whole app with the fallback bank first, and test the AI calls on the deployed URL.
+
+Decision
+
+Vite + React, no database, localStorage plus two serverless functions. This keeps you well inside 2 hours.
+
+Next: should I start with the skeleton (Vite setup, the screen switch, footer, and the deploy by 1:00), or write the question bank first? Also tell me which AI provider you'll use for the API key.
+
+User:
+
+11/18/2026 18:34:13
+
+okay, break down into different subparts so that I can give it to different AIs simultaneously. I am going to use Gemini API keys
+
+Assistant:
+
+11/18/2026 18:34:49
+
+Splitting by file ownership works well. Each AI gets one module, and they all code against the same contract. Without a shared contract, the pieces won't plug together.
+
+Step 1: Paste this contract into every AI's prompt
+
+PROJECT: Adaptive English-tenses tutor (simple past vs present perfect) for a
+Class 9 Olympiad learner. Vite + React (plain JS, no TypeScript, no router, no UI
+library, no Redux). Roll number token in footer: 23B1216. Vercel deploy.
+Do NOT change names or shapes below. Only write the files assigned to you.
+
+QUESTION shape (bank and AI-generated):
+{ id, format: "mcq"|"correct"|"explain"|"transform", level: 1|2|3,
+  skill: "marker"|"form"|"meaning", prompt: string, options?: string[] (mcq only),
+  answer: string, acceptable?: string[], 
+  traps?: { [wrongOptionText]: "M1"|"M2"|"form"|"marker" },
+  modelExplanation: string,
+  feedback: { correct: string, M1: string, M2: string, other: string },
+  source: "bank"|"ai" }
+M1 = "past action + visible result => present perfect" (e.g. "I have seen him yesterday")
+M2 = "for/since duration with simple past for something still true" (e.g. "I lived here for 5 years")
+
+SESSION STATE shape:
+{ startedAt: number, secondsLeft: number (starts 600), taskIndex: 0-7, level: 1|2|3,
+  streakCorrect: number, wrongByTag: {M1,M2,form,marker}, askedIds: string[],
+  log: [{qid, format, level, correct, tag, rule, timeMs}] }
+
+RESULT shape: { qid, correct: boolean, tag: null|"M1"|"M2"|"form"|"marker",
+                explanationQuality?: "good"|"partial"|"poor" }
+
+DECISION shape: { rule: "HARDER"|"ALTERNATIVE"|"PREREQUISITE"|"CONTINUE",
+                  reason: string (learner-friendly, mentions their actual mistake),
+                  nextLevel: 1|2|3, lessonId?: "timeline"|"participles"|"markers",
+                  newState: SessionState }
+
+MODULE APIs (exact names):
+ src/engine.js   export decideNext(state, result) -> DECISION
+ src/store.js    export SESSION_SECONDS=600, loadSession(), saveSession(state),
+                 clearSession(), newSession()
+ src/bank.js     export BANK (Question[]), export pickFromBank({skill, level, askedIds})
+ src/ai.js       export getNextQuestion({skill, level, lastTag, askedIds}) -> Promise<Question>
+                 export evaluateExplanation({question, learnerText}) ->
+                   Promise<{verdict:"good"|"partial"|"poor", tag:null|"M1"|"M2", hint:string, source:"ai"|"fallback"}>
+ api/generate.js POST {skill, level, lastTag} -> Question JSON
+ api/evaluate.js POST {prompt, answer, modelExplanation, learnerText} -> {verdict, tag, hint}
+
+COMPONENT props:
+ Welcome({saved, onStart, onResume}) | Diagnostic via Task | Task({question, secondsLeft, taskIndex, onSubmit(answerText)})
+ Feedback({question, result, decision, onNext, onRetry}) | Lesson({lessonId, onDone})
+ Summary({state, onRestart}) | About() | Footer() always shows "23B1216"
+
+Step 2: The six assignments
+
+#
+Owner
+Files
+Depends on
+A
+Scaffold and glue
+App.jsx, Footer.jsx, Layout, Welcome.jsx, About.jsx, index.css (360 px mobile-first), Vercel config
+Contract only
+B
+Content
+bank.js
+Contract only
+C
+Adaptive engine
+engine.js plus a small test file
+Contract only
+D
+Persistence and timer
+store.js, useCountdown.js hook
+Contract only
+E
+Learning screens
+Task.jsx, Feedback.jsx, Lesson.jsx, Summary.jsx
+Contract only
+F
+Gemini AI
+api/generate.js, api/evaluate.js, ai.js
+Contract only
+
+Brief for each (append to the contract)
+
+A: Scaffold and glue
+
+Create the Vite+React app. App.jsx holds screen state (welcome | diagnostic | task | feedback | lesson | summary | about) and a useReducer session. Flow: Welcome → 2 diagnostic tasks → task loop → Feedback → (Lesson if the decision is ALTERNATIVE or PREREQUISITE, then retry) → Summary after task 8 or when the timer reaches 0. Call getNextQuestion, evaluateExplanation (explain format only), and decideNext. Save via saveSession after every answer. The footer with 23B1216 must appear on every screen. Welcome shows "Resume (task X of 8, m:ss left)" when a saved session exists. Include a README stub naming Vite + React as the template.
+
+B: Content (you must review this one yourself, since it's D3)
+
+Write BANK: 16 items. Cover all four formats, at least 2 per format, levels 1-3, and all three skills. Include at least 4 items where an M1 trap and an M2 trap are the wrong options. Keep the tone conversational ("Let's look at…"), with short sentences, written for a 14-year-old Olympiad student. Level 3 items should have no cue words ("She ___ (visit) Jaipur" with context in a second sentence). Each item needs modelExplanation and feedback for correct, M1, M2, and other, where the feedback names the learner's specific mistake and does not just reveal the answer. Export pickFromBank (skip askedIds; fall back to the nearest level).
+
+C: Engine
+
+Implement decideNext as pure, readable code (no side effects, short comments, because it will be explained in a viva). Rules: (1) correct and, if explanationQuality is given, not "poor": streak+1; if streak ≥ 2 → HARDER (level+1, max 3, reset streak). (2) wrong with tag M1/M2 → ALTERNATIVE (lessonId "timeline"). (3) wrong with tag form/marker where wrongByTag[tag] reaches 2 → PREREQUISITE (lessonId "participles" for form, "markers" for marker). (4) otherwise CONTINUE. The reason string must reference the actual tag, e.g. "You used simple past with 'for 5 years', which describes something still true." Wrong answers reset the streak. Append to log. Add a quick test file covering each of the 4 outcomes.
+
+D: Store and timer
+
+store.js: localStorage key et617_23b1216_session, wrapped in try/catch (storage can fail). newSession() returns a fresh state with secondsLeft = 600. loadSession() returns null if missing, corrupt, or finished. useCountdown(initialSeconds, onEnd) is a hook that ticks every second, pauses when the tab is hidden, and exposes the seconds left so the parent can save them.
+
+E: Learning screens
+
+Task.jsx renders four formats: mcq (radio buttons), correct (text input: "fix the sentence"), explain (textarea: "why this tense?"), transform (text input). Show a timer bar (m:ss) and 8 progress dots. Feedback.jsx shows correct/incorrect, the feedback text, and a clearly labelled "Rule fired: …" box using decision.rule and decision.reason. Lesson.jsx shows a timeline diagram (draw it in CSS/SVG: past line, NOW marker, "finished time" vs "connected to now") for timeline, and short sorting activities for participles and markers, then calls onDone. Summary.jsx shows score, the log table, and the misconception counts. Mobile-first at 360 px, buttons in the lower half of the screen, no hover-only actions, large tap targets.
+
+F: Gemini AI
+
+Write api/generate.js and api/evaluate.js as Vercel serverless functions calling the Gemini REST API with the key in process.env.GEMINI_API_KEY (never hardcode). Request JSON output (responseMimeType: "application/json" with a response schema). Validate before returning: generate checks the schema, and a deterministic marker rule: if the prompt contains yesterday/ago/last/in 19xx-20xx/when, the answer must be simple past; if it contains already/yet/so far/ever/never/since/just, it must be present perfect. Reject and return 502 on failure. evaluate must return a verdict in {good, partial, poor}, and the hint must not contain the model answer. In ai.js, add a 6-second timeout, and on any failure return pickFromBank(...) (with source:"bank") or a keyword-based check for explanations (source:"fallback"). Put the full prompts as named constants at the top of each file, since D6 needs them shown.
+
+Step 3: Merge plan
+
+Create the repo and Vite scaffold first (owner A, about 5 minutes), commit it, and give the others the repo so file names don't clash.
+
+Paste each AI's output into its own files, committing one module at a time with a clear message. The rules flag a single giant commit, and this also gives you the 30-minute commit trail.
+
+Integrate in this order: A + D, then B + C, then E, then F. Run npm run dev after each step, and use the bank only until F is merged.
+
+Deploy by 1:00 with the bank-only version. Add GEMINI_API_KEY under Vercel → Settings → Environment Variables, redeploy, and then test F.
+
+Cautions
+
+Gemini model name: check the current one in Google AI Studio (I'm not certain which is the newest) and keep it in one constant.
+
+Don't commit .env. Add it to .gitignore before the first push.
+
+Read every file. The viva includes a live change request, and the rules say you must explain the generated code. Module C and the validators in F are the most likely targets.
+
+Save every AI chat link in order, because the AI-use log is graded. Several parallel chats are fine as long as they are all disclosed.
+
+B is your D3 content, so edit the feedback text into your own voice. Identical content across students counts as plagiarism.
+
+Want me to start with module A so you have the scaffold to commit right away?
+
+User:
+
+11/18/2026 18:41:16
+
+ok, I have given all AIs the code to generate the six parts. tell me about step 3 and how to merge?
+
+Assistant:
+
+11/18/2026 18:41:35
+
+Merge in layers, running the app after each one so you know which piece broke. Commit each module separately, which also builds the commit trail the rules ask for.
+
+0. Create the scaffold first
+
+Do this before pasting anything:
+
+npm create vite@latest . -- --template react
+npm install
+
+Run it inside your repo folder (et617-endsem-23b1216). If it asks about existing files (DESIGN.md), choose to ignore them and continue.
+
+Before the first push, make sure .gitignore contains:
+
+node_modules
+dist
+.env
+.env.local
+.vercel
+
+Then:
+
+npm run dev
+git add .
+git commit -m "Scaffold Vite + React app"
+git push
+
+Confirm the default Vite page loads. Delete the demo files you don't need later (App.css, the logos).
+
+1. Layer 1: pure logic modules (D, C, B)
+
+These have no UI, so they're the easiest to verify.
+
+Paste into
+From AI
+Commit message
+src/store.js, src/useCountdown.js
+D
+Add session storage and countdown hook
+src/engine.js (+ its test file)
+C
+Add adaptive decision engine
+src/bank.js
+B
+Add tagged question bank
+
+Checks:
+
+Run C's test file (usually node src/engine.test.js). All 4 outcomes should pass.
+
+Open bank.js and confirm it has 16 items, all 4 formats, and export const BANK plus export function pickFromBank.
+
+Skim the bank's feedback text. Edit it into your own voice, since this is your D3 content.
+
+2. Layer 2: shell (A)
+
+Paste A's App.jsx, Footer.jsx, Layout, Welcome.jsx, About.jsx, and index.css, then run npm run dev.
+
+Expect errors here because the screens from E don't exist yet. To avoid a blank screen, temporarily create stub files for Task.jsx, Feedback.jsx, Lesson.jsx, and Summary.jsx that just return <div>Task stub</div> etc. Delete them when E's files arrive.
+
+Commit: Add app shell, welcome, about, footer
+
+Check: Welcome and About render, and 23B1216 shows in the footer.
+
+3. Layer 3: learning screens (E)
+
+Overwrite the stubs with E's real Task.jsx, Feedback.jsx, Lesson.jsx, and Summary.jsx. Commit: Add task, feedback, lesson and summary screens
+
+Check the full flow with ai.js not yet in place:
+
+Start, answer the 2 diagnostic items, and continue through tasks.
+
+Answer one wrong with an M1 trap, and confirm the "Rule fired" box shows ALTERNATIVE and then the Lesson timeline.
+
+Answer 2 correct in a row and confirm HARDER.
+
+Refresh mid-session and confirm Resume works.
+
+Let the timer end and confirm you land on Summary.
+
+For this step, temporarily make App.jsx use pickFromBank directly if ai.js isn't there yet.
+
+4. Layer 4: Gemini (F)
+
+Paste api/generate.js, api/evaluate.js, and src/ai.js. Commit: Add Gemini API functions with validation and fallback
+
+Then:
+
+Push, and confirm the Vercel deploy succeeds.
+
+In Vercel: Settings → Environment Variables, add GEMINI_API_KEY, and redeploy (env vars only apply to new deployments).
+
+Test on the live URL. Plain npm run dev won't serve /api.
+
+Test the fallback by temporarily setting a wrong key, and confirm the app still works and labels the item as bank/fallback.
+
+What usually breaks (and the fixes)
+
+Symptom
+Likely cause
+Fix
+does not provide an export named X
+One AI used export default, the other a named import
+Match the contract's exact names
+Blank screen, console error
+Wrong import path or file name case (Task.jsx vs task.jsx)
+Fix the path; Vercel's Linux build is case-sensitive
+Props are undefined
+Component prop names differ from App's call
+Compare against the contract's COMPONENT props
+state.log is not a function / missing field
+newSession() shape differs from the contract
+Make store.js match the SESSION STATE exactly
+API function crashes
+require vs import mismatch (Vite's package.json has "type": "module")
+Use export default async function handler(req, res)
+fetch is not defined in the API
+Old Node version
+Set Node 18+ in Vercel project settings
+Styles clash
+A's CSS and E's classes differ
+Add E's missing classes to index.css, or put E's styles in its own file
+
+When something breaks, copy the exact error message plus the two files involved into one AI chat and ask for a minimal fix. Don't ask it to rewrite the module.
+
+Timeline against the exam
+
+Layers 1 and 2 done and deployed before 1:00 (first deployment checkpoint).
+
+Layer 3 working by about 1:20.
+
+Layer 4 (Gemini) by about 1:35. If it isn't working by then, ship with the labelled fallback and move on. The rules explicitly allow a labelled fallback, as long as D6 describes the real AI behaviour.
+
+Commit at least every 30 minutes, which this plan already does.
+
+Before you stop
+
+Run both D5 paths on the live URL and take screenshots (correct learner and M1 or M2 learner).
+
+Confirm the footer on every screen and the About screen.
+
+Add a README naming Vite + React and the AI tools you used.
+
+Read through engine.js and the API validators once, since those are the likeliest viva targets.
+
+Paste any error you hit at a given layer and I'll help sort it out. Which layer are you starting with?
+
+User:
+
+11/18/2026 18:42:06
+
+I have a Mac, in case that changes anything
+
+Assistant:
+
+11/18/2026 18:42:13
+
+Mostly nothing changes. Git, Node, Vite, and Vercel behave the same on macOS. Here are the Mac-specific differences.
+
+Shortcuts
+
+Ctrl becomes Cmd almost everywhere: Cmd+S to save, Cmd+Shift+G for Source Control in VS Code.
+
+The VS Code terminal opens with Ctrl+` on Mac too (that one stays Ctrl).
+
+Open the system Terminal with Cmd+Space, type "Terminal".
+
+Install Git and Node (check now, before the exam)
+
+git --version
+node --version
+
+If git --version prompts to install "Command Line Developer Tools", accept. That installs Git.
+
+Node should be 18 or newer (20+ is safer). If it's missing, install from nodejs.org or with Homebrew: brew install node.
+
+Permission errors with global installs
+If npm install -g vercel fails with EACCES, don't use sudo. Either skip the CLI (the dashboard import is enough) or run it without installing: npx vercel.
+
+Case-sensitivity gotcha (the one that really matters)
+Mac's file system ignores letter case, but Vercel's build servers do not. If an import says ./components/Task but the file is task.jsx, it works on your Mac and fails on Vercel. Keep file names exactly matching the imports, including capitalisation (Task.jsx, Feedback.jsx, Footer.jsx). Git on Mac can also silently ignore a case-only rename, so if you rename a file, use git mv old new.
+
+Hidden files
+.gitignore and .env start with a dot, so Finder hides them. Create and edit them in VS Code, or view hidden files in Finder with Cmd+Shift+..
+
+GitHub sign-in
+If a push asks for a password, use the VS Code Accounts sign-in, or a personal access token instead of your password. macOS may also ask once to store the credential in Keychain. Click Allow.
+
+Commands from earlier
+Everything in the merge plan (npm create vite@latest . -- --template react, npm install, npm run dev, git commands) works unchanged in the Mac terminal.
+
+One quick check to do right now: run node --version and git --version and tell me what they print, so we know your setup is ready before you start Layer 0.
+
+User:
+
+11/18/2026 18:43:54
+
+which linter to use Oxlint or ESLint
+
+Assistant:
+
+11/18/2026 18:43:59
+
+Use ESLint, or skip linting entirely. Don't spend exam time deciding this.
+
+Why ESLint if you want one
+
+Vite's React template already ships with ESLint configured (eslint.config.js), so it works with zero setup.
+
+It has the react-hooks rules, which catch real bugs in your useCountdown hook and useEffect dependencies. Those are likely trouble spots.
+
+It's the standard tool, so it's easy to explain if asked.
+
+Why not Oxlint
+
+It's faster, but speed doesn't matter for a project this small.
+
+Newer Vite templates may offer it as an option, but extra config or plugin gaps could cost you time you don't have.
+
+The real answer for a 2-hour exam
+
+Linting earns no marks. The rubric covers design fit, pedagogy, and your AI judgement.
+
+Don't let lint errors block you. Vercel builds with npm run build, which doesn't run the linter by default, so lint warnings won't fail your deploy.
+
+How to use it without losing time
+
+Keep the default ESLint config from the Vite template and don't customize it.
+
+Run npm run lint once after merging the AI-generated modules. It often catches real problems, such as unused imports, missing hook dependencies, and undefined variables.
+
+Fix errors, ignore style warnings, and move on.
+
+Don't lint before 1:00. Get the first deploy live first.
+
+Also, don't ask the AIs to "fix all lint warnings" across the project. That can rewrite working code and break things. Fix only what actually errors.
+
+If the Vite scaffold asks you to choose a linter or variant when you run npm create vite@latest, pick the default React (JavaScript) template and keep going.
+
+User:
+
+11/18/2026 19:03:47
+
+npm run dev
+
+adaptive-english-tenses-tutor@1.0.0 dev
+vite
+
+VITE v8.3.8  ready in 260 ms
+
+➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+7:03:15 PM [vite] Internal server error: Failed to resolve import "./components/Welcome.jsx" from "src/App.jsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/src/App.jsx:7:20
+  4  |  import { getNextQuestion, evaluateExplanation } from "./ai.js";
+  5  |  // These presentation components are supplied by the component implementation task.
+  6  |  import Welcome from "./components/Welcome.jsx";
+     |                       ^
+  7  |  import Task from "./components/Task.jsx";
+  8  |  import Feedback from "./components/Feedback.jsx";
+      at TransformPluginContext._formatLog (file:///Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/node_modules/vite/dist/node/chunks/node.js:8865:39)
+      at TransformPluginContext.error (file:///Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/node_modules/vite/dist/node/chunks/node.js:8862:14)
+      at resolveId (file:///Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/node_modules/vite/dist/node/chunks/node.js:26552:18)
+      at async file:///Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/node_modules/vite/dist/node/chunks/node.js:26651:23
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/node_modules/vite/dist/node/chunks/node.js:26624:4)
+      at async EnvironmentPluginContainer.transform (file:///Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/node_modules/vite/dist/node/chunks/node.js:8636:14)
+      at async loadAndTransform (file:///Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/node_modules/vite/dist/node/chunks/node.js:20112:26)
+7:03:15 PM [vite] (client) Pre-transform error: Failed to resolve import "./components/Welcome.jsx" from "src/App.jsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/src/App.jsx:7:20
+  4  |  import { getNextQuestion, evaluateExplanation } from "./ai.js";
+  5  |  // These presentation components are supplied by the component implementation task.
+  6  |  import Welcome from "./components/Welcome.jsx";
+     |                       ^
+  7  |  import Task from "./components/Task.jsx";
+  8  |  import Feedback from "./components/Feedback.jsx";
+7:03:15 PM [vite] (client) Pre-transform error: Failed to resolve import "./components/Welcome.jsx" from "src/App.jsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/src/App.jsx:7:20
+  4  |  import { getNextQuestion, evaluateExplanation } from "./ai.js";
+  5  |  // These presentation components are supplied by the component implementation task.
+  6  |  import Welcome from "./components/Welcome.jsx";
+     |                       ^
+  7  |  import Task from "./components/Task.jsx";
+  8  |  import Feedback from "./components/Feedback.jsx"; (x2)
+
+Assistant:
+
+11/18/2026 19:03:53
+
+That error is expected at this stage. App.jsx imports components that don't exist yet, so Vite can't resolve ./components/Welcome.jsx. The dev server itself is fine.
+
+Check what you have
+
+In the terminal:
+
+ls src
+ls src/components
+
+(If src/components doesn't exist, that's the cause.)
+
+Fix
+
+Create the folder src/components/.
+
+Paste each component the AIs generated into its own file, named exactly as App imports them:
+Welcome.jsx, Task.jsx, Feedback.jsx, Lesson.jsx, Summary.jsx, About.jsx, Footer.jsx (and Layout if A made one)
+
+Check the full import list at the top of App.jsx (lines 1 to 15) and make sure every path in it has a matching file. The capitalisation must match too.
+
+If some components aren't ready yet (use stubs)
+
+For any missing file, create a stub so the app runs. For example, src/components/Task.jsx:
+
+export default function Task() {
+  return <div>Task stub</div>;
+}
+
+Do the same for Feedback, Lesson, Summary, and so on. The stub must use export default because App imports them as default imports. Replace each stub when the real file arrives.
+
+Also check
+
+Some AIs may have put components directly in src/ rather than src/components/. If so, either move them into components/ or change the import paths in App.jsx. Moving the files is cleaner.
+
+After adding files, Vite reloads on its own. If the error banner sticks, stop the server (Ctrl+C) and run npm run dev again.
+
+One more thing I noticed
+
+Your project name shows as adaptive-english-tenses-tutor@1.0.0, which means one AI's package.json overwrote the Vite one. That's fine, but make sure package.json still has react, react-dom, and @vitejs/plugin-react in its dependencies, and the scripts dev, build, and preview. If you see more import errors about react, run npm install again.
+
+Once the components are in place, run npm run dev again. If another error appears, paste the first error block only. Repeated blocks are the same error, so the first one is enough.
+
+User:
+
+11/18/2026 19:07:39
+
+I dont have welcome, footer and about yet. which AI should give it?
+
+Assistant:
+
+11/18/2026 19:07:46
+
+Those belong to AI A (Scaffold and glue). In the split, A owns App.jsx, Footer.jsx, Layout, Welcome.jsx, About.jsx, and index.css. It looks like A only returned App.jsx (the comment in your error, "supplied by the component implementation task", suggests it assumed someone else would write them).
+
+Fix: go back to AI A's chat and send this
+
+You wrote App.jsx but the components it imports don't exist. Please now write
+the missing files, matching the contract exactly and matching the imports/props
+App.jsx already uses:
+
+1. src/components/Welcome.jsx  - props: { saved, onStart, onResume }
+   Shows the app title, a one-line pitch for an Olympiad learner, a Start button,
+   and if `saved` exists a "Resume (task X of 8, m:ss left)" button
+   (X = saved.taskIndex + 1, time from saved.secondsLeft).
+   Also a short line: "10-minute session. Progress saves automatically."
+2. src/components/Footer.jsx   - always shows "23B1216" (plus a small link/button
+   to About if App.jsx supports navigation to it)
+3. src/components/About.jsx    - what the app is, the card (P4 adaptive tutor,
+   T7 simple past vs present perfect, L6 Olympiad learner, C4 10-minute sessions),
+   and identity token 23B1216
+4. src/components/Layout.jsx   - only if App.jsx imports it; wraps children + Footer
+5. Any CSS classes these use, added to src/index.css
+
+Use export default for each component. Mobile-first at 360px, big tap targets,
+no hover-only actions. Output each file in its own code block with its file path.
+
+Also paste App.jsx into that message if it's a fresh chat, so A can match the exact prop names and imports it used.
+
+To unblock yourself right now (about 2 minutes)
+
+Create temporary stubs so npm run dev runs:
+
+src/components/Welcome.jsx
+
+export default function Welcome({ onStart }) {
+  return <button onClick={onStart}>Start</button>;
+}
+
+src/components/Footer.jsx
+
+export default function Footer() {
+  return <footer>23B1216</footer>;
+}
+
+src/components/About.jsx
+
+export default function About() {
+  return <div>About - 23B1216</div>;
+}
+
+Replace them with A's real versions when they arrive. Do the same for any other missing file App.jsx imports (check its top 15 lines).
+
+Commit once the app runs, even with stubs, so you have an early commit and a deployable build for the 1:00 checkpoint.
+
+User:
+
+11/18/2026 19:19:08
+
+ok, everything is running well so far, however the questions are not moving forward in a correct way. then next question should be x+1. currently its stagnated at one, and questions are appearing in same order. I want it to be random.
+
+Assistant:
+
+11/18/2026 19:19:18
+
+Both symptoms point to the same two spots, and neither is in the UI. In the contract, nobody was explicitly assigned to increment taskIndex or add the question's id to askedIds, so each AI likely assumed the other would do it. That keeps the counter at 1, and pickFromBank keeps returning the first unasked item, so the order never changes.
+
+Fix 1: Make pickFromBank random (src/bank.js)
+
+Replace the function with this:
+
+export function pickFromBank({ skill, level, askedIds = [] }) {
+  const unasked = BANK.filter((q) => !askedIds.includes(q.id));
+  const pool = unasked.length ? unasked : BANK; // reuse only if everything was asked
+
+  // Prefer the requested level, then the requested skill, then the nearest level
+  let candidates = pool.filter((q) => q.level === level && (!skill || q.skill === skill));
+  if (!candidates.length) candidates = pool.filter((q) => q.level === level);
+  if (!candidates.length) {
+    const minGap = Math.min(...pool.map((q) => Math.abs(q.level - level)));
+    candidates = pool.filter((q) => Math.abs(q.level - level) === minGap);
+  }
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+Fix 2: Increment taskIndex and record askedIds (App.jsx)
+
+Find the place where the app moves to the next question. It may be called handleNext, onNext, or a NEXT case in the reducer. When the next question is loaded, the state update must look like this:
+
+const nextState = {
+  ...decision.newState,
+  taskIndex: state.taskIndex + 1,
+  askedIds: [...new Set([...state.askedIds, question.id])],
+};
+
+Then:
+
+Save nextState with saveSession(nextState), and use it as the new session state.
+
+If nextState.taskIndex >= 8, go to the Summary screen instead of loading another question.
+
+Pass taskIndex from state to Task (it expects taskIndex, 0 to 7, and shows taskIndex + 1).
+
+When calling getNextQuestion, pass the updated askedIds, not the old ones. Otherwise you get the same question again.
+
+Two other things to check
+
+The ALTERNATIVE and PREREQUISITE retry. The retry after a lesson should not increase taskIndex, only a moving-on action should. Make sure onRetry and onNext are not sharing the same increment.
+
+The askedIds update inside engine.js. If decideNext already adds the id, the Set above avoids duplicates, so it's safe either way.
+
+Quick test
+
+After the change, play through 3 tasks. The counter should read 1, 2, 3, and the questions should differ between runs. Check localStorage in the browser dev tools (Application tab) to confirm askedIds grows after each answer.
+
+If it's still stuck, paste the part of App.jsx that handles "next" (the handler, plus how getNextQuestion is called) and I'll point to the exact line. Also, commit this once it works, for example Fix task progression and randomise question selection.
+
+User:
+
+11/18/2026 19:20:27
+
+no, tell me what to give to which AI for this correction.
+
+Assistant:
+
+11/18/2026 19:20:37
+
+Give the progression bug to AI A (it owns App.jsx, where the counter and askedIds are updated) and the randomness to AI B (it owns bank.js and pickFromBank). AI F only needs a small note so the AI path doesn't repeat questions either.
+
+Paste each message into that AI's original chat. Also paste the current version of the file(s) it needs to edit, because it may not remember what it wrote.
+
+To AI A (App.jsx): progression bug
+
+Bug: in the running app, the task counter stays stuck at task 1 and the same
+question order repeats. Please fix App.jsx (attached below) with minimal changes,
+without rewriting unrelated code.
+
+Required behaviour:
+1. When the learner moves on to the next question (Feedback "Next"), taskIndex
+   must increase by 1 (taskIndex 0-7, Task shows taskIndex + 1 of 8).
+2. The id of the question just answered must be added to state.askedIds (no
+   duplicates) BEFORE the next question is requested, and the UPDATED askedIds
+   must be passed to getNextQuestion({ skill, level, lastTag, askedIds }).
+3. After the 8th task (taskIndex reaches 8) or when the timer hits 0, go to the
+   Summary screen instead of loading another question.
+4. Retry after a Lesson (ALTERNATIVE or PREREQUISITE decision) must NOT increase
+   taskIndex. Only moving on increases it. Make sure onRetry and onNext do not
+   share the same increment.
+5. saveSession must be called with the updated state after each change.
+6. Do not rely on stale state: build the next state in one place and use that
+   same object for saveSession and for the getNextQuestion call.
+
+Return the full corrected App.jsx and list the lines you changed.
+
+[PASTE current App.jsx HERE]
+
+To AI B (bank.js): random selection
+
+Bug: pickFromBank returns the same questions in the same order every session.
+Please rewrite ONLY pickFromBank in bank.js (keep the export name and signature:
+pickFromBank({ skill, level, askedIds }) -> Question).
+
+Required behaviour:
+1. Exclude questions whose id is in askedIds. If every question has been asked,
+   allow repeats from the full bank.
+2. Among the remaining, prefer the requested level and skill; if none match, the
+   requested level with any skill; if none, the nearest level.
+3. Choose RANDOMLY among the candidates (Math.random), not the first match.
+4. Always return a valid Question object (never undefined).
+
+Return the updated function only, plus one sentence on how it chooses.
+
+[PASTE current bank.js HERE]
+
+To AI F (ai.js): quick consistency note
+
+Small check on ai.js: when getNextQuestion falls back to pickFromBank, pass the
+askedIds it received so repeats are avoided. Also, if the Gemini-generated
+question has the same prompt as one already asked, treat it as invalid and fall
+back. Return only the changed lines, not the whole file.
+
+[PASTE current ai.js HERE]
+
+After you paste the new code
+
+Replace App.jsx and the pickFromBank function, then run npm run dev.
+
+Test: play through 3 tasks. The counter should read 1, 2, 3, the questions should differ from a previous run, and a wrong M1 answer followed by the lesson and retry should keep the counter on the same number.
+
+Commit: Fix task progression and randomise question selection.
+
+If the counter is still stuck after A's fix, paste A's App.jsx here and I'll find the line.
+
+User:
+
+11/18/2026 19:31:31
+
+for questions with write the correct format of the verb, it is facing some glitch. It doesnt understand that the answer is correct and glitch back to the start screen. also in the final session summary is wrong or misleading.
+
+Your session summary
+Time used: 2:51
+12 / 20
+60% correct. Good progress.
+Mistake types
+
+Finished time, visible result
+0
+Duration that is still true
+0
+Verb form
+0
+Time words
+0
+No mistakes logged. Nice and clean.
+Task log
+
+Task	Result	Mistake	Rule	Time
+
+1	· L	Right	none	CONTINUE	0.0s
+2	Choose · L2	Right	none	CONTINUE	7.7s
+3	· L	Wrong	none	CONTINUE	0.0s
+4	Fix · L2	Wrong	none	CONTINUE	13.6s
+5	· L	Right	none	CONTINUE	0.0s
+6	Choose · L1	Right	none	CONTINUE	4.8s
+7	· L	Right	none	HARDER	0.0s
+8	Choose · L2	Right	none	HARDER	3.5s
+9	· L	Right	none	CONTINUE	0.0s
+10	Rewrite · L2	Right	none	CONTINUE	21.6s
+11	· L	Wrong	none	CONTINUE	0.0s
+12	Choose · L2	Wrong	none	CONTINUE	14.9s
+13	· L	Right	none	CONTINUE	0.0s
+14	Choose · L2	Right	none	CONTINUE	6.3s
+15	· L	Right	none	HARDER	0.0s
+16	Rewrite · L3	Right	none	HARDER	19.6s
+17	· L	Wrong	none	CONTINUE	0.0s
+18	Fix · L3	Wrong	none	CONTINUE	17.7s
+19	· L	Wrong	none	CONTINUE	0.0s
+20	Fix · L3	Wrong	none	CONTINUE	12.9s
+
+Assistant:
+
+11/18/2026 19:31:49
+
+Both problems come from gaps in the contract. Nobody was assigned to grade typed answers or to own the log, so each AI assumed another one did it.
+
+What the summary is telling us
+
+Every task is logged twice. Each task has a blank row (· L, 0.0s) and a real row. That is why 20 rows appear for about 10 tasks, and why the score reads 12/20. Both engine.js (the contract told it to append to log) and App.jsx are appending, and one of them has no format or time.
+
+Every mistake shows "none", and the counts are 0. Wrong typed answers never get a tag (M1, M2, form or marker). Without a tag, the rule stays CONTINUE and the ALTERNATIVE and PREREQUISITE outcomes can never fire. That breaks your core P4 requirement.
+
+The crash on "write the correct verb" is probably the same missing grader. Typed answers need to be compared against answer and acceptable, and nothing does that cleanly. I can't see your code, so first open the browser console (Cmd+Option+J) and read the red error when it jumps back to Start. Include it when you message AI A.
+
+To AI A (App.jsx)
+
+Three bugs in App.jsx (current file attached). Fix with minimal changes.
+
+1. GRADING of typed answers (formats "correct", "transform", "explain"):
+   Add a pure function gradeAnswer(question, text) -> { correct, tag }.
+   - normalise both sides: trim, lowercase, collapse spaces, strip trailing
+     punctuation and curly quotes.
+   - correct if equal to question.answer or any of question.acceptable
+     (also normalised).
+   - for mcq compare the chosen option text.
+   - if wrong, derive the tag: first check question.traps (normalised keys);
+     else if the prompt contains for/since and the learner used simple past
+     where present perfect is needed -> "M2"; else if it contains
+     yesterday/ago/last/in <year> and the learner used "have/has + participle"
+     -> "M1"; else if the learner's verb is not a valid verb form -> "form";
+     else "marker".
+   Wrap it in try/catch so a bad answer can never throw.
+2. CRASH: after submitting a "correct"-format answer the app jumps back to the
+   Welcome screen. Find the cause (undefined result/question, state reset,
+   exception in render) and fix it. Never navigate to Welcome from an error;
+   show Feedback with a safe default instead.
+3. LOG: exactly ONE log entry per answered task, with {qid, format, level,
+   correct, tag, rule, timeMs}. decideNext already appends to log, so do NOT
+   append again in App.jsx; just use decision.newState. Make sure timeMs is
+   measured from when the question was shown.
+
+Return the full corrected App.jsx and list changed lines.
+[PASTE App.jsx]
+
+To AI C (engine.js), a quick check
+
+Confirm decideNext appends exactly ONE log entry, filling qid, format, level,
+correct, tag, rule, timeMs (take format and timeMs from result, add them to the
+RESULT shape if missing). Also confirm a wrong result with tag M1/M2 returns
+ALTERNATIVE. Return only changed lines.
+[PASTE engine.js]
+
+To AI E (Summary.jsx)
+
+Fix Summary.jsx: compute score as correct count / log.length (log entries are
+now one per task). Show Task as "<format label> · L<level>" using the log's
+format, and show tag labels for non-null tags. Skip any entry without a qid.
+Show "No mistakes logged" only if every entry is correct.
+[PASTE Summary.jsx]
+
+Then test
+
+Clear old data first: browser dev tools → Application → Local Storage → delete et617_23b1216_session. Old sessions have the duplicate rows.
+
+Answer a "fix the verb" item correctly, once with different capitalisation and once with a trailing full stop. Both should be accepted.
+
+Answer one with a simple past after "for 5 years". You should see M2, the ALTERNATIVE rule, and then the timeline lesson.
+
+Check that the Summary shows one row per task and non-zero mistake counts.
+
+Commit as Fix answer grading, log duplication and summary. If the jump back to Start continues, paste the red console error and I'll point to the line.
+
+User:
+
+11/18/2026 19:40:15
+
+wait, I think I didnt add the gemini API key anywhere. thats why this issue cos there. where should I add the API Key?
+
+Assistant:
+
+11/18/2026 19:40:24
+
+Good catch to check, but the missing key is probably not what's causing those two bugs. Without a key, ai.js should fall back to the bank (that's what the fallback is for). The duplicate log rows, the "none" tags, and the jump to Start come from the grading and logging gaps, so keep the fixes from my last message. The key does matter for getting real AI-generated questions, so here is where it goes.
+
+Important: the key can't work with npm run dev
+
+The key is used only by the serverless functions in api/, and Vite's dev server doesn't run those. So on localhost, every AI call fails and the app uses the fallback. That's expected. The AI path can only be tested on the deployed Vercel URL (or locally with vercel dev).
+
+Where to add it
+
+1. Get the key
+Create one at aistudio.google.com → Get API key.
+
+2. Add it to Vercel (the main place)
+
+Vercel dashboard → your project et617-23b1216 → Settings → Environment Variables.
+
+Name: GEMINI_API_KEY (exactly this, matching process.env.GEMINI_API_KEY in api/*.js).
+
+Value: paste the key.
+
+Select all environments (Production, Preview, Development) and save.
+
+Redeploy: Deployments tab → latest deployment → ⋯ → Redeploy. Env vars only apply to new deployments.
+
+3. Optional, for local testing
+Create a file named .env.local in the project root:
+
+GEMINI_API_KEY=your_key_here
+
+Then run npx vercel dev instead of npm run dev (it asks you to log in and link the project the first time).
+
+Make sure .env.local is in .gitignore. Check with git status: it must not appear as a file to commit.
+
+Never do these
+
+Don't paste the key into ai.js, App.jsx, or any file in src/. Code in src/ ships to the browser, so anyone could read it.
+
+Don't put it in a variable starting with VITE_, for the same reason.
+
+Don't commit it or paste it into any AI chat you'll share in your AI-use log. The rules say a committed key is a violation.
+
+How to confirm it's working
+
+Open the live URL and play a few tasks.
+
+Some questions should carry the source: "ai" label (or whatever label F's ai.js uses). If everything says bank or fallback, check:
+Vercel → Deployments → your latest → Functions / Logs for errors from /api/generate.
+
+The Gemini model name in api/generate.js. Check it against the current names in AI Studio, since a retired name returns 404.
+
+That the validator isn't rejecting every output (it returns 502 on failure, which triggers the fallback).
+
+You can also test the function directly by opening the browser Network tab and looking at the /api/generate request and its response.
+
+So: fix the grading and logging first (that's what's breaking the app), and add the key when you deploy. If the AI path then still falls back every time, paste the Vercel function log error and I'll help read it.
+
+User:
+
+11/18/2026 20:00:30
+
+nice. now the issue is that the same question is getting repeated, make it so that the question is different for the same session. like have a tracker sort of thing, which will tell if a specific question is asked. if yes, and they have gotten it correct then remove it from the list of possible questions.
+
+Assistant:
+
+11/18/2026 20:00:49
+
+The repeats most likely happen because askedIds isn't being updated, or because AI-generated questions have no stable id. The fix is to track two lists in the session and have both the bank and the AI path obey them.
+
+The rule
+
+List
+Meaning
+Effect
+askedIds
+Shown this session
+Not shown again while unasked questions remain
+masteredIds
+Answered correctly
+Never shown again this session
+askedPrompts
+Normalised prompt text of everything shown
+Catches AI questions that repeat a prompt under a new id
+
+A question answered wrong can come back later, but only after fresh ones run out, and never twice in a row. The retry right after a lesson is separate and should keep the same question.
+
+1. Give to AI D (store.js)
+
+In newSession() add three fields: masteredIds: [], askedIds: [], askedPrompts: [].
+In loadSession(), if a saved session lacks any of these, default them to [] so
+old saves don't crash. Return only the changed lines.
+
+2. Give to AI B (bank.js): replace pickFromBank
+
+export function pickFromBank({ skill, level, askedIds = [], masteredIds = [], lastId = null }) {
+  const notMastered = BANK.filter((q) => !masteredIds.includes(q.id));
+  const fresh = notMastered.filter((q) => !askedIds.includes(q.id));
+  const retry = notMastered.filter((q) => askedIds.includes(q.id) && q.id !== lastId);
+
+  // fresh first; then previously-missed ones; then anything not mastered; last resort: full bank
+  const pool = fresh.length ? fresh
+             : retry.length ? retry
+             : notMastered.length ? notMastered
+             : BANK;
+
+  let c = pool.filter((q) => q.level === level && (!skill || q.skill === skill));
+  if (!c.length) c = pool.filter((q) => q.level === level);
+  if (!c.length) {
+    const gap = Math.min(...pool.map((q) => Math.abs(q.level - level)));
+    c = pool.filter((q) => Math.abs(q.level - level) === gap);
+  }
+  return c[Math.floor(Math.random() * c.length)];
+}
+
+This is a drop-in replacement. Also check that the bank has enough questions. With 16 items and 8 tasks per session, there is room, but a correct answer permanently removes an item, so more items help.
+
+3. Give to AI A (App.jsx)
+
+Add duplicate-question tracking. Minimal changes, return the full file + changed lines.
+
+When an answer is submitted and graded:
+- askedIds: add question.id (no duplicates)
+- askedPrompts: add normalised question.prompt (lowercase, trim, collapse spaces)
+- masteredIds: add question.id ONLY if the answer was correct (no duplicates)
+Build this in the same place as the other next-state update so saveSession and
+the next getNextQuestion call both use the UPDATED state. Read these fields with
+a fallback (state.masteredIds ?? []) in case of an old saved session.
+
+When requesting the next question call:
+getNextQuestion({ skill, level, lastTag, askedIds, masteredIds, askedPrompts, lastId: question.id })
+
+A retry after a Lesson re-uses the SAME question object and must not request a
+new question.
+[PASTE App.jsx]
+
+4. Give to AI F (ai.js)
+
+Update getNextQuestion to accept { skill, level, lastTag, askedIds, masteredIds,
+askedPrompts, lastId }.
+1. After receiving an AI question, normalise its prompt (lowercase, trim, collapse
+   spaces). If it matches any entry in askedPrompts, or its id is in askedIds,
+   treat it as invalid and use the fallback.
+2. Always overwrite the AI question's id with "ai-" + a short hash of the
+   normalised prompt, so repeats can be detected.
+3. Fallback is pickFromBank({ skill, level, askedIds, masteredIds, lastId }).
+4. In api/generate.js, send the last 5 asked prompts to Gemini with the
+   instruction "Do not repeat or closely paraphrase these questions", so
+   duplicates are avoided at the source. Return only changed lines.
+[PASTE ai.js and api/generate.js]
+
+Test
+
+Clear the old save first: DevTools → Application → Local Storage → delete et617_23b1216_session.
+
+Play a full session. No prompt should appear twice, except a retry right after a lesson.
+
+Answer one correctly, then check Local Storage: its id should be in both askedIds and masteredIds.
+
+Answer one wrong and move on. It may return late in the session, but not immediately.
+
+Commit as Track asked and mastered questions to prevent repeats. This is also a good D6/D7 point: the tutor never re-tests mastered content, which suits a bored Olympiad learner.
+
+User:
+
+11/18/2026 20:25:29
+
+lets make the report now
+
+Assistant:
+
+11/18/2026 20:26:38
+
+I'm drafting the full report in the required heading order, with placeholders for everything only you can supply.
+
+Used tool
+
+The report draft is written. Opening it for you now.
+
+Used tool
+
+Your report draft is ready, so read it over, edit inline, and export it as PDF when done.
+
+Fill in before exporting:
+
+Every [FILL] and [VERIFY] marker (screenshots, real prompts from api/generate.js and api/evaluate.js, chat links, your actual URL)
+
+D3: swap my sample tasks for the real items from your bank.js
+
+D6: confirm the "Not AI" paragraph matches what your App.jsx really does
+
+D5: only claim what you actually ran on the live app, with screenshots
+
+Rewrite the persona and reflection in your own words, since identical text across students is treated as plagiarism. Delete the "DRAFT NOTES" box at the top before exporting.
+
+Powered by Claude Exporter (https://www.ai-chat-exporter.net)

@@ -1,0 +1,133 @@
+Adaptive English tenses tutor
+
+Created: 11/18/2026 18:39:12
+Updated: 11/18/2026 19:32:56
+Exported: 11/18/2026 21:49:44
+Link: https://claude.ai/chat/b1e3f5d2-b5af-436b-83cc-371b4b14a334
+
+User:
+
+11/18/2026 18:39:12
+
+PROJECT: Adaptive English-tenses tutor (simple past vs present perfect) for a
+Class 9 Olympiad learner. Vite + React (plain JS, no TypeScript, no router, no UI
+library, no Redux). Roll number token in footer: 23B1216. Vercel deploy.
+Do NOT change names or shapes below. Only write the files assigned to you.
+
+QUESTION shape (bank and AI-generated):
+{ id, format: "mcq"|"correct"|"explain"|"transform", level: 1|2|3,
+  skill: "marker"|"form"|"meaning", prompt: string, options?: string[] (mcq only),
+  answer: string, acceptable?: string[], 
+  traps?: { [wrongOptionText]: "M1"|"M2"|"form"|"marker" },
+  modelExplanation: string,
+  feedback: { correct: string, M1: string, M2: string, other: string },
+  source: "bank"|"ai" }
+M1 = "past action + visible result => present perfect" (e.g. "I have seen him yesterday")
+M2 = "for/since duration with simple past for something still true" (e.g. "I lived here for 5 years")
+
+SESSION STATE shape:
+{ startedAt: number, secondsLeft: number (starts 600), taskIndex: 0-7, level: 1|2|3,
+  streakCorrect: number, wrongByTag: {M1,M2,form,marker}, askedIds: string[],
+  log: [{qid, format, level, correct, tag, rule, timeMs}] }
+
+RESULT shape: { qid, correct: boolean, tag: null|"M1"|"M2"|"form"|"marker",
+                explanationQuality?: "good"|"partial"|"poor" }
+
+DECISION shape: { rule: "HARDER"|"ALTERNATIVE"|"PREREQUISITE"|"CONTINUE",
+                  reason: string (learner-friendly, mentions their actual mistake),
+                  nextLevel: 1|2|3, lessonId?: "timeline"|"participles"|"markers",
+                  newState: SessionState }
+
+MODULE APIs (exact names):
+ src/engine.js   export decideNext(state, result) -> DECISION
+ src/store.js    export SESSION_SECONDS=600, loadSession(), saveSession(state),
+                 clearSession(), newSession()
+ src/bank.js     export BANK (Question[]), export pickFromBank({skill, level, askedIds})
+ src/ai.js       export getNextQuestion({skill, level, lastTag, askedIds}) -> Promiseexport evaluateExplanation({question, learnerText}) ->
+                   Promise<{verdict:"good"|"partial"|"poor", tag:null|"M1"|"M2", hint:string, source:"ai"|"fallback"}>
+ api/generate.js POST {skill, level, lastTag} -> Question JSON
+ api/evaluate.js POST {prompt, answer, modelExplanation, learnerText} -> {verdict, tag, hint}
+
+COMPONENT props:
+ Welcome({saved, onStart, onResume}) | Diagnostic via Task | Task({question, secondsLeft, taskIndex, onSubmit(answerText)})
+ Feedback({question, result, decision, onNext, onRetry}) | Lesson({lessonId, onDone})
+ Summary({state, onRestart}) | About() | Footer() always shows "23B1216"
+
+E: Learning screens
+Task.jsx renders four formats: mcq (radio buttons), correct (text input: “fix the sentence”), explain (textarea: “why this tense?”), transform (text input). Show a timer bar (m:ss) and 8 progress dots. Feedback.jsx shows correct/incorrect, the feedback text, and a clearly labelled “Rule fired: …” box using decision.rule and decision.reason. Lesson.jsx shows a timeline diagram (draw it in CSS/SVG: past line, NOW marker, “finished time” vs “connected to now”) for timeline, and short sorting activities for participles and markers, then calls onDone. Summary.jsx shows score, the log table, and the misconception counts. Mobile-first at 360 px, buttons in the lower half of the screen, no hover-only actions, large tap targets.
+
+Assistant:
+
+11/18/2026 18:41:21
+
+Writing the Task component with the timer and answer input.
+
+I wrote the four learning screens: Task.jsx, Feedback.jsx, Lesson.jsx and Summary.jsx. I haven't run them; they're plain JS React with default exports. I assumed they live in src/components/, so Task.jsx imports SESSION_SECONDS from ../store.js. If the folder differs, change that one path.
+
+Styling: each file carries its own inline styles, because I wasn't assigned a CSS file. Everything is built for 360 px, with 52–56 px tap targets and no hover-only actions. Each screen has a sticky bottom action bar, so the main button sits in the lower half.
+
+Task.jsx:
+It renders the four formats and a timer bar with an m:ss readout. The bar turns amber at 2:00 and red at 1:00.
+
+It shows 8 progress dots.
+
+onSubmit receives the chosen option text for mcq and the trimmed input otherwise. Submit stays disabled until there is an answer.
+
+Feedback.jsx:
+It shows the Correct / Not quite header, then the feedback text. A wrong answer with tag M1 or M2 gets that tag's feedback; any other wrong tag gets feedback.other.
+
+It also shows the correct answer, the model explanation, and the explanation-quality badge for explain tasks.
+
+The blue "Rule fired: …" box carries decision.rule and decision.reason.
+
+Try-again appears only after a wrong answer. When the rule is PREREQUISITE, the next button reads "Open the mini-lesson", and onNext has to route to the lesson.
+
+Lesson.jsx:
+The timeline is an SVG with a toggle between "Finished time" and "Connected to now".
+
+The participles and markers lessons are tap-to-sort cards, with a short reason after each answer and a score at the end.
+
+All three call onDone.
+
+Summary.jsx:
+It shows the score and time used, mistake-count bars for M1, M2, form and marker, and a "Focus next" tip for the most frequent mistake.
+
+The log table scrolls sideways inside its own box.
+
+Footer and About weren't in my assignment, so none of these screens render the "23B1216" footer themselves. The parent needs to render Footer under them.
+
+File: /mnt/user-data/outputs/src/components/Task.jsx
+
+File: /mnt/user-data/outputs/src/components/Feedback.jsx
+
+File: /mnt/user-data/outputs/src/components/Lesson.jsx
+
+File: /mnt/user-data/outputs/src/components/Summary.jsx
+
+User:
+
+11/18/2026 19:32:43
+
+Fix Summary.jsx: compute score as correct count / log.length (log entries are now one per task). Show Task as "· L" using the log's format, and show tag labels for non-null tags. Skip any entry without a qid. Show "No mistakes logged" only if every entry is correct. [PASTE Summary.jsx]
+
+Assistant:
+
+11/18/2026 19:32:56
+
+Filtering the log entries before counting.
+
+The paste placeholder came through empty, so I patched my own copy of Summary.jsx from earlier. If your version has diverged, tell me and I'll reapply the changes to it.
+
+Log filter: the log now ignores any entry without a qid. The score is the correct count divided by the length of that filtered log. The percentage, the table and the empty-state check all use the same filtered list.
+
+Task column: it still reads "· L" from the entry's format and level, for example "Fix · L2". An unknown format falls back to the raw string.
+
+Mistake column: a non-null tag now shows its label, such as "Finished time, visible result" for M1. A null tag shows "none".
+
+"No mistakes logged": the message now appears only when there is at least one entry and every entry is correct. Otherwise the box shows a "Focus next" tip for the most frequent mistake. If the wrong answers have no tag counts, it says to look back at the wrong answers in the log. With no tasks it prompts the learner to answer a few.
+
+The mistake-type bars still read state.wrongByTag, not the log. Tell me if you want them computed from the filtered log instead.
+
+File: /mnt/user-data/outputs/src/components/Summary.jsx
+
+Powered by Claude Exporter (https://www.ai-chat-exporter.net)

@@ -177,9 +177,7 @@ export const BANK = [
     skill: "form",
     prompt: "Let's transform this sentence into the present perfect without changing its basic meaning: 'Meera finishes her science project.'",
     answer: "Meera has finished her science project.",
-    acceptable: [
-      "Meera has finished her science project."
-    ],
+    acceptable: ["Meera has finished her science project."],
     modelExplanation: "Change 'finishes' to 'has finished'. Present perfect follows the structure has/have + past participle.",
     feedback: {
       correct: "Great transformation! You changed the verb structure while keeping the subject and meaning.",
@@ -237,7 +235,6 @@ export const BANK = [
 
   // ==========================================
   // LEVEL 3 — OLYMPIAD CHALLENGE
-  // No cue words. Context is supplied separately.
   // ==========================================
 
   {
@@ -359,9 +356,7 @@ export const BANK = [
     skill: "form",
     prompt: "Let's try a final challenge. Rewrite the sentence in the simple past without changing the main event: 'The team has won the competition.' The competition took place last Saturday.",
     answer: "The team won the competition last Saturday.",
-    acceptable: [
-      "The team won the competition last Saturday."
-    ],
+    acceptable: ["The team won the competition last Saturday."],
     modelExplanation: "The competition happened at a finished time in the past. We therefore use the simple past form 'won' rather than the present perfect.",
     feedback: {
       correct: "Fantastic! You recognised that a specific finished past time requires the simple past.",
@@ -375,49 +370,65 @@ export const BANK = [
 
 
 // ==========================================
-// QUESTION PICKER
+// QUESTION PICKER — ADAPTIVE SELECTION
 // ==========================================
 
-export function pickFromBank({ skill, level, askedIds = [] }) {
-  const asked = new Set(askedIds);
-
-  // First, find questions matching the requested skill
-  // and remove questions already asked.
-  let candidates = BANK.filter(
-    (question) =>
-      question.skill === skill &&
-      !asked.has(question.id)
+export function pickFromBank({
+  skill,
+  level,
+  askedIds = [],
+  masteredIds = [],
+  lastId = null
+}) {
+  const notMastered = BANK.filter(
+    (q) => !masteredIds.includes(q.id)
   );
 
-  // If no questions remain for this skill,
-  // allow unused questions from the complete bank.
-  if (candidates.length === 0) {
-    candidates = BANK.filter(
-      (question) => !asked.has(question.id)
+  const fresh = notMastered.filter(
+    (q) => !askedIds.includes(q.id)
+  );
+
+  const retry = notMastered.filter(
+    (q) => askedIds.includes(q.id) && q.id !== lastId
+  );
+
+  // Fresh questions first, then previously attempted
+  // questions that have not been mastered.
+  // Finally, allow mastered questions as a last resort.
+  const pool = fresh.length
+    ? fresh
+    : retry.length
+      ? retry
+      : notMastered.length
+        ? notMastered
+        : BANK;
+
+  // Prefer both requested level and skill.
+  let candidates = pool.filter(
+    (q) => q.level === level && (!skill || q.skill === skill)
+  );
+
+  // If unavailable, prioritise the requested level.
+  if (!candidates.length) {
+    candidates = pool.filter(
+      (q) => q.level === level
     );
   }
 
-  // All questions have been used.
-  if (candidates.length === 0) {
-    return null;
+  // If the requested level is unavailable,
+  // select the nearest available level.
+  if (!candidates.length) {
+    const gap = Math.min(
+      ...pool.map((q) => Math.abs(q.level - level))
+    );
+
+    candidates = pool.filter(
+      (q) => Math.abs(q.level - level) === gap
+    );
   }
 
-  // Find the nearest available difficulty level.
-  const nearestLevel = Math.min(
-    ...candidates.map((question) =>
-      Math.abs(question.level - level)
-    )
-  );
-
-  candidates = candidates.filter(
-    (question) =>
-      Math.abs(question.level - level) === nearestLevel
-  );
-
-  // Randomly select one question from the remaining options.
-  const randomIndex = Math.floor(
-    Math.random() * candidates.length
-  );
-
-  return candidates[randomIndex];
+  // Return a random question from the final pool.
+  return candidates[
+    Math.floor(Math.random() * candidates.length)
+  ];
 }

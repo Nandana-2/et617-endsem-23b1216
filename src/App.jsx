@@ -33,6 +33,14 @@ function normalise(text) {
     .trim();
 }
 
+// Prompt normalisation intentionally does not remove punctuation.
+function normalisePrompt(text) {
+  return String(text ?? '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
 function isPastVerb(word) {
   const value = normalise(word);
 
@@ -53,11 +61,7 @@ function hasInvalidVerbForm(text) {
     ) ||
     /\b(?:did)\s+(?:went|saw|ate|wrote|took|gave|spoke|broke|chose|drove|knew|found|bought|brought|thought|left|felt|kept|lost|won)\b/.test(
       value
-    ) ||
-    /\b(?:has|have)\s+\w+ed\b/.test(value) &&
-      /\b(?:gone|seen|done|been|written|eaten|taken|given|spoken|broken|chosen|driven|known|made|found|bought|brought|thought|left|felt|kept|lost|won)\b/.test(
-        value
-      ) === false
+    )
   );
 }
 
@@ -86,22 +90,18 @@ function deriveErrorTag(question, answer) {
     } else if (typeof traps === 'object') {
       for (const [trapAnswer, trapTag] of Object.entries(traps)) {
         if (normalise(trapAnswer) === value) {
-          return typeof trapTag === 'string' ? trapTag : trapTag?.tag || 'form';
+          return typeof trapTag === 'string'
+            ? trapTag
+            : trapTag?.tag || 'form';
         }
       }
     }
   }
 
-  // M2: "for" or "since" commonly signals present perfect.
-  if (
-    /\b(for|since)\b/i.test(prompt) &&
-    isPastVerb(value)
-  ) {
+  if (/\b(for|since)\b/i.test(prompt) && isPastVerb(value)) {
     return 'M2';
   }
 
-  // M1: a finished past-time marker should not normally be
-  // combined with the present perfect.
   const hasPastMarker =
     /\b(yesterday|ago|last)\b/i.test(prompt) ||
     /\bin\s+(?:19|20)\d{2}\b/i.test(prompt);
@@ -123,16 +123,67 @@ function deriveErrorTag(question, answer) {
 }
 
 /* -------------------------------------------------------
+   DUPLICATE-QUESTION TRACKING
+------------------------------------------------------- */
+
+function uniqueValues(values) {
+  return [...new Set((values || []).filter(Boolean))];
+}
+
+function updateQuestionTracking(state, question, correct) {
+  const questionId = question?.id;
+  const prompt = normalisePrompt(question?.prompt);
+
+  return {
+    ...state,
+
+    askedIds: uniqueValues([
+      ...(state.askedIds ?? []),
+      questionId,
+    ]),
+
+    askedPrompts: uniqueValues([
+      ...(state.askedPrompts ?? []),
+      prompt,
+    ]),
+
+    masteredIds: uniqueValues([
+      ...(state.masteredIds ?? []),
+      ...(correct && questionId ? [questionId] : []),
+    ]),
+  };
+}
+
+function mergeQuestionTracking(decisionState, trackedState) {
+  return {
+    ...decisionState,
+
+    askedIds: uniqueValues([
+      ...(trackedState.askedIds ?? []),
+      ...(decisionState.askedIds ?? []),
+    ]),
+
+    askedPrompts: uniqueValues([
+      ...(trackedState.askedPrompts ?? []),
+      ...(decisionState.askedPrompts ?? []),
+    ]),
+
+    masteredIds: uniqueValues([
+      ...(trackedState.masteredIds ?? []),
+      ...(decisionState.masteredIds ?? []),
+    ]),
+  };
+}
+
+/* -------------------------------------------------------
    ANSWER GRADING
 ------------------------------------------------------- */
 
 export function gradeAnswer(question, learnerAnswer) {
   try {
     const rawAnswer = learnerAnswer ?? '';
-
     let answer = rawAnswer;
 
-    // Some MCQ components return the selected option index.
     if (
       question?.format === 'mcq' &&
       typeof rawAnswer === 'number' &&
@@ -141,7 +192,6 @@ export function gradeAnswer(question, learnerAnswer) {
       answer = question.options[rawAnswer] ?? '';
     }
 
-    // Some MCQ components return the option as a string.
     if (
       question?.format === 'mcq' &&
       typeof rawAnswer === 'string' &&
@@ -220,7 +270,6 @@ function sessionReducer(state, action) {
 
 function getSkill(session) {
   const wrongByTag = session?.wrongByTag || {};
-
   const entries = Object.entries(wrongByTag);
   const highest = entries.sort((a, b) => b[1] - a[1])[0];
 
@@ -266,9 +315,6 @@ function makeFallbackDecision(session, result, question, timeMs) {
     streakCorrect: result?.correct
       ? (session?.streakCorrect || 0) + 1
       : 0,
-    askedIds: [
-      ...new Set([...(session?.askedIds || []), question?.id]),
-    ],
     log: [...(session?.log || []), nextLogEntry],
   };
 
@@ -318,7 +364,7 @@ export default function App() {
   ----------------------------------------------------- */
 
   const fetchQuestion = useCallback(
-    async (currentSession) => {
+    async (currentSession, lastId = null) => {
       if (!currentSession) return;
 
       const requestId = ++questionRequestId.current;
@@ -338,10 +384,15 @@ export default function App() {
             currentSession.log?.[
               currentSession.log.length - 1
             ]?.tag || null,
-          askedIds: currentSession.askedIds || [],
+
+          // Fallbacks keep older saved sessions compatible.
+          askedIds: currentSession.askedIds ?? [],
+          masteredIds: currentSession.masteredIds ?? [],
+          askedPrompts: currentSession.askedPrompts ?? [],
+
+          lastId,
         });
 
-        // Ignore an older request if a newer question was requested.
         if (requestId !== questionRequestId.current) {
           return;
         }
@@ -372,7 +423,12 @@ export default function App() {
   const startSession = useCallback(() => {
     clearSession();
 
-    const freshSession = newSession();
+    const freshSession = {
+      ...newSession(),
+      askedIds: [],
+      askedPrompts: [],
+      masteredIds: [],
+    };
 
     dispatch({
       type: 'SET_SESSION',
@@ -394,12 +450,24 @@ export default function App() {
       return;
     }
 
+    const compatibleSession = {
+      ...existingSession,
+      askedIds: existingSession.askedIds ?? [],
+      askedPrompts: existingSession.askedPrompts ?? [],
+      masteredIds: existingSession.masteredIds ?? [],
+    };
+
     dispatch({
       type: 'SET_SESSION',
-      session: existingSession,
+      session: compatibleSession,
     });
 
-    fetchQuestion(existingSession);
+    const lastId =
+      compatibleSession.log?.[
+        compatibleSession.log.length - 1
+      ]?.qid ?? null;
+
+    fetchQuestion(compatibleSession, lastId);
   }, [fetchQuestion, startSession]);
 
   const restartSession = useCallback(() => {
@@ -455,8 +523,6 @@ export default function App() {
         qid: question.id,
       };
 
-      // Explanation evaluation adds a quality assessment.
-      // It does not replace the normal answer grading.
       if (question.format === 'explain') {
         try {
           const explanationResult = await evaluateExplanation({
@@ -479,40 +545,38 @@ export default function App() {
 
       setResult(finalResult);
 
-      // The first two tasks are diagnostic tasks.
-      // They update askedIds but do not enter the adaptive log.
-      if ((session.taskIndex || 0) < 2) {
-        const diagnosticState = {
-          ...session,
-          askedIds: [
-            ...new Set([
-              ...(session.askedIds || []),
-              question.id,
-            ]),
-          ],
-        };
+      // Update all duplicate-question tracking in one place.
+      // This tracked state is the state we save and pass to the engine.
+      const trackedSession = updateQuestionTracking(
+        session,
+        question,
+        finalResult.correct
+      );
 
+      // The first two tasks are diagnostic tasks.
+      // They update tracking but do not enter the adaptive log.
+      if ((session.taskIndex || 0) < 2) {
         dispatch({
           type: 'SET_SESSION',
-          session: diagnosticState,
+          session: trackedSession,
         });
 
-        saveSession(diagnosticState);
+        saveSession(trackedSession);
 
         setDecision({
           rule: 'CONTINUE',
           reason: 'Diagnostic task completed.',
-          nextLevel: diagnosticState.level || 1,
-          newState: diagnosticState,
+          nextLevel: trackedSession.level || 1,
+          newState: trackedSession,
         });
 
         setScreen('feedback');
         return;
       }
 
-      // Adaptive tasks: engine.js owns the single log entry.
+      // Adaptive tasks: decideNext owns the single log entry.
       try {
-        const adaptiveDecision = decideNext(session, {
+        const adaptiveDecision = decideNext(trackedSession, {
           ...finalResult,
           timeMs,
           format: question.format,
@@ -530,22 +594,32 @@ export default function App() {
           throw new Error('Invalid decision returned by decideNext().');
         }
 
-        // Do not append another log entry here.
-        // Use the state returned by decideNext().
+        // Preserve the tracking arrays even if the engine returns
+        // a new state that does not include the new fields.
+        const updatedState = mergeQuestionTracking(
+          adaptiveDecision.newState,
+          trackedSession
+        );
+
+        const finalDecision = {
+          ...adaptiveDecision,
+          newState: updatedState,
+        };
+
         dispatch({
           type: 'SET_SESSION',
-          session: adaptiveDecision.newState,
+          session: updatedState,
         });
 
-        saveSession(adaptiveDecision.newState);
+        saveSession(updatedState);
 
-        setDecision(adaptiveDecision);
+        setDecision(finalDecision);
         setScreen('feedback');
       } catch (error) {
         console.error('Adaptive decision failed:', error);
 
         const fallbackDecision = makeFallbackDecision(
-          session,
+          trackedSession,
           finalResult,
           question,
           timeMs
@@ -591,8 +665,10 @@ export default function App() {
 
     saveSession(nextSession);
 
-    fetchQuestion(nextSession);
-  }, [session, fetchQuestion]);
+    // Pass the question just answered as lastId.
+    // fetchQuestion receives the latest tracking state.
+    fetchQuestion(nextSession, question?.id ?? null);
+  }, [session, question, fetchQuestion]);
 
   /* -----------------------------------------------------
      LESSON FLOW
@@ -604,8 +680,8 @@ export default function App() {
       return;
     }
 
-    // Retry the same question after the lesson.
-    // Do not increment taskIndex here.
+    // Retry the SAME question object.
+    // Do not call fetchQuestion() or increment taskIndex.
     setResult(null);
     setDecision(null);
     answerStartedAt.current = Date.now();
@@ -644,12 +720,14 @@ export default function App() {
     return (
       <>
         <About />
+
         <button
           type="button"
           onClick={() => setShowAbout(false)}
         >
           Back
         </button>
+
         <Footer />
       </>
     );
@@ -684,12 +762,13 @@ export default function App() {
      LOADING SCREEN
   ----------------------------------------------------- */
 
-  if (loading || !question && screen === 'task') {
+  if (loading || (!question && screen === 'task')) {
     return (
       <>
         <main className="app-main">
           <p>Preparing your next question...</p>
         </main>
+
         <Footer />
       </>
     );
@@ -724,10 +803,12 @@ export default function App() {
         <>
           <main className="app-main">
             <p>Preparing feedback...</p>
+
             <button type="button" onClick={goNext}>
               Continue
             </button>
           </main>
+
           <Footer />
         </>
       );

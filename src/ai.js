@@ -17,26 +17,37 @@ const fetchWithTimeout = async (url, options = {}) => {
   }
 };
 
-export async function getNextQuestion({ skill, level, lastTag, askedIds = [] }) {
+const hashString = (str) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+  return Math.abs(hash).toString(36);
+};
+
+export async function getNextQuestion({ skill, level, lastTag, askedIds = [], masteredIds = [], askedPrompts = [], lastId = null }) {
   try {
+    const recentPrompts = askedPrompts.slice(-5);
     const res = await fetchWithTimeout('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ skill, level, lastTag })
+      body: JSON.stringify({ skill, level, lastTag, recentPrompts })
     });
     
     if (!res.ok) throw new Error('Generation failed or invalid');
     const question = await res.json();
     
-    // Treat as invalid if the ID or prompt is already in askedIds
-    if (askedIds.includes(question.id) || askedIds.includes(question.prompt)) {
+    const normalizedPrompt = question.prompt.toLowerCase().trim().replace(/\s+/g, ' ');
+    const newId = "ai-" + hashString(normalizedPrompt);
+
+    const isDuplicatePrompt = askedPrompts.some(p => p.toLowerCase().trim().replace(/\s+/g, ' ') === normalizedPrompt);
+    if (askedIds.includes(question.id) || askedIds.includes(newId) || isDuplicatePrompt) {
       throw new Error('Duplicate question generated');
     }
     
+    question.id = newId;
     return question;
   } catch (err) {
     console.warn("AI generation failed, falling back to bank.", err);
-    return { ...pickFromBank({ skill, level, askedIds }), source: "bank" };
+    return { ...pickFromBank({ skill, level, askedIds, masteredIds, lastId }), source: "bank" };
   }
 }
 

@@ -1,0 +1,54 @@
+remove the riya and student have written exam question. they are showing some glitch add something else
+
+8:13 PM
+Worked for 11s
+I found the two likely problem questions: the Riya sentence and the sentence about students who “have written” essays. Which would you like me to replace them with?   
+
+8:14 PM
+just remove them
+
+8:14 PM
+Worked for 16s
+Removed the Riya question and the students’ “have written” question from [bank.js](/Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/src/bank.js). Neither question ID had other references.
+Edited bank.js+0-36View changesUndoView changes
+   
+8:14 PM
+something is wrong with the ui of 1st entry page. the about button is not coherent
+
+8:17 PM
+Worked for 29s
+I moved the About button into the welcome page’s action group and styled it as a secondary button, so it now matches the other controls. The change is in [Welcome.jsx](/Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/src/components/Welcome.jsx) and [App.jsx](/Users/nandana/Desktop/ET617/endsem/et617-endsem-23b1216/src/App.jsx).
+  Edited 2 files+10-8View changesUndoView changes
+src/App.jsxsrc/App.jsx+1-7
+src/components/Welcome.jsxsrc/components/Welcome.jsx+9-1
+   
+8:17 PM
+still like this
+
+8:20 PM
+Worked for 1m 8s
+The screenshot shows the old bare About button and a saved-session label with NaN. The current source had moved About into the welcome page’s action group, but the app couldn’t rebuild because store.js lacked the session functions App.jsx imports.
+I added those functions and a fallback for older saved sessions, so the resume label gets a valid task number. The production build now succeeds. Restart or refresh the app to load the updated UI.
+  Edited store.js+49-1View changesUndoView changes
+   
+8:21 PM
+the question keeps getting repeated, why is the pool of question not working?
+
+8:23 PM
+Worked for 1m 18s
+The repeats came from the fallback picker: when AI generation failed or produced a duplicate, the bank could reuse previously asked questions—especially after the learner mastered the remaining ones.
+I changed the picker to exclude questions already seen in the session, using both question IDs and normalized prompt text. It now returns a clear error if the bank has no unseen questions left. The build succeeds.
+  Edited 2 files+22-21View changesUndoView changes
+src/ai.jssrc/ai.js+13-2
+src/bank.jssrc/bank.js+9-19
+    
+8:24 PM
+also the summary thing is not correct. sometimes it shows that i did a question correct when i didnt do it right
+
+8:25 PM
+Worked for 56s
+The summary was leaving out the first two diagnostic answers, even though they were graded. That could make the total and mistake breakdown incomplete.
+I’ve added those answers to the session log and now calculate the mistake breakdown from logged results. The build succeeds. Older saved sessions won’t have diagnostic results to add retroactively.
+  Edited 2 files+29-7View changesUndoView changes
+src/App.jsxsrc/App.jsx+22-5
+src/components/Summary.jsxsrc/components/Summary.jsx+7-2

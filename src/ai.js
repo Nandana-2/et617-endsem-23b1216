@@ -47,7 +47,18 @@ export async function getNextQuestion({ skill, level, lastTag, askedIds = [], ma
     return question;
   } catch (err) {
     console.warn("AI generation failed, falling back to bank.", err);
-    return { ...pickFromBank({ skill, level, askedIds, masteredIds, lastId }), source: "bank" };
+    const bankQuestion = pickFromBank({
+      skill,
+      level,
+      askedIds,
+      askedPrompts,
+      masteredIds,
+      lastId,
+    });
+    if (!bankQuestion) {
+      throw new Error('No unseen questions remain in the question bank.');
+    }
+    return { ...bankQuestion, source: "bank" };
   }
 }
 

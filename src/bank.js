@@ -341,31 +341,21 @@ export function pickFromBank({
   skill,
   level,
   askedIds = [],
+  askedPrompts = [],
   masteredIds = [],
   lastId = null
 }) {
-  const notMastered = BANK.filter(
-    (q) => !masteredIds.includes(q.id)
+  const normalize = (value = "") => value.toLowerCase().trim().replace(/\s+/g, " ");
+  const seenIds = new Set(askedIds);
+  const seenPrompts = new Set(askedPrompts.map(normalize));
+
+  // Never reuse a question within the current session. Mastery affects
+  // adaptive decisions, but should not make the remaining pool repeat sooner.
+  const pool = BANK.filter((q) =>
+    !seenIds.has(q.id) && !seenPrompts.has(normalize(q.prompt))
   );
 
-  const fresh = notMastered.filter(
-    (q) => !askedIds.includes(q.id)
-  );
-
-  const retry = notMastered.filter(
-    (q) => askedIds.includes(q.id) && q.id !== lastId
-  );
-
-  // Fresh questions first, then previously attempted
-  // questions that have not been mastered.
-  // Finally, allow mastered questions as a last resort.
-  const pool = fresh.length
-    ? fresh
-    : retry.length
-      ? retry
-      : notMastered.length
-        ? notMastered
-        : BANK;
+  if (!pool.length) return null;
 
   // Prefer both requested level and skill.
   let candidates = pool.filter(

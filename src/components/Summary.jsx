@@ -37,7 +37,12 @@ function fmt(total) {
 
 export default function Summary({ state, onRestart }) {
   const log = (state.log || []).filter((l) => l && l.qid);
-  const wrong = state.wrongByTag || { M1: 0, M2: 0, form: 0, marker: 0 };
+  const wrong = log.reduce((counts, entry) => {
+    if (!entry.correct && Object.hasOwn(TAGS, entry.tag)) {
+      counts[entry.tag] += 1;
+    }
+    return counts;
+  }, { M1: 0, M2: 0, form: 0, marker: 0 });
   const right = log.filter((l) => l.correct).length;
   const total = log.length;
   const pct = total ? Math.round((right / total) * 100) : 0;
@@ -105,7 +110,7 @@ export default function Summary({ state, onRestart }) {
                     </td>
                     <td style={S.td}>{l.tag ? (TAGS[l.tag]?.name || l.tag) : "none"}</td>
                     <td style={S.td}>{l.rule || "none"}</td>
-                    <td style={S.td}>{(l.timeMs / 1000).toFixed(1)}s</td>
+                    <td style={S.td}>{(Number(l.timeMs || 0) / 1000).toFixed(1)}s</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,5 +1,53 @@
 import { useEffect, useRef, useState } from "react";
 
+export const SESSION_SECONDS = 10 * 60;
+const SESSION_KEY = "adaptive-english-tenses-session";
+
+export function loadSession() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(SESSION_KEY));
+    if (!saved || typeof saved !== "object") return null;
+
+    // Older saved sessions may not include these fields.
+    return {
+      ...saved,
+      taskIndex: Number.isFinite(saved.taskIndex) ? saved.taskIndex : 0,
+      secondsLeft: Number.isFinite(saved.secondsLeft)
+        ? Math.max(0, saved.secondsLeft)
+        : SESSION_SECONDS,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function saveSession(session) {
+  try {
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } catch {
+    // The session can continue for this visit if storage is unavailable.
+  }
+}
+
+export function clearSession() {
+  try {
+    window.localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // Ignore unavailable browser storage.
+  }
+}
+
+export function newSession() {
+  return {
+    level: 1,
+    taskIndex: 0,
+    secondsLeft: SESSION_SECONDS,
+    log: [],
+    wrongByTag: {},
+    streakCorrect: 0,
+  };
+}
+
 // Counts down from initialSeconds, one tick per second.
 // - Pauses while the tab is hidden (no ticks, no catch-up on return).
 // - Calls onEnd exactly once when it reaches 0.

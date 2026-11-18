@@ -554,20 +554,37 @@ export default function App() {
       );
 
       // The first two tasks are diagnostic tasks.
-      // They update tracking but do not enter the adaptive log.
+      // They do not affect adaptive decisions, but still belong in the
+      // learner's session history and summary.
       if ((session.taskIndex || 0) < 2) {
+        const diagnosticState = {
+          ...trackedSession,
+          log: [
+            ...(trackedSession.log || []),
+            {
+              qid: question.id,
+              format: question.format,
+              level: question.level || session.level || 1,
+              correct: Boolean(finalResult.correct),
+              tag: finalResult.correct ? null : finalResult.tag,
+              rule: 'DIAGNOSTIC',
+              timeMs,
+            },
+          ],
+        };
+
         dispatch({
           type: 'SET_SESSION',
-          session: trackedSession,
+          session: diagnosticState,
         });
 
-        saveSession(trackedSession);
+        saveSession(diagnosticState);
 
         setDecision({
           rule: 'CONTINUE',
           reason: 'Diagnostic task completed.',
-          nextLevel: trackedSession.level || 1,
-          newState: trackedSession,
+          nextLevel: diagnosticState.level || 1,
+          newState: diagnosticState,
         });
 
         setScreen('feedback');

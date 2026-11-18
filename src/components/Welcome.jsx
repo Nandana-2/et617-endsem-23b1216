@@ -9,7 +9,7 @@ function formatTime(seconds = 0) {
   return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-export default function Welcome({ saved, onStart, onResume }) {
+export default function Welcome({ saved, onStart, onResume, onAbout }) {
   return (
     <section className="welcome-screen screen-state">
       <div className="welcome-content">
@@ -53,6 +53,14 @@ export default function Welcome({ saved, onStart, onResume }) {
               {formatTime(saved.secondsLeft)} left)
             </button>
           )}
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onAbout}
+          >
+            About this project
+          </button>
         </div>
 
         <p className="welcome-note">

@@ -744,14 +744,8 @@ export default function App() {
           saved={Boolean(savedSession)}
           onStart={startSession}
           onResume={resumeSession}
+          onAbout={() => setShowAbout(true)}
         />
-
-        <button
-          type="button"
-          onClick={() => setShowAbout(true)}
-        >
-          About
-        </button>
 
         <Footer />
       </>

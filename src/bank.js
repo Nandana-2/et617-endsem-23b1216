@@ -32,24 +32,6 @@ export const BANK = [
   },
 
   {
-    id: "q02",
-    format: "correct",
-    level: 1,
-    skill: "form",
-    prompt: "Let's check the verb form. Complete this sentence using the simple past: 'Riya ___ (buy) a new dictionary last week.'",
-    answer: "bought",
-    acceptable: ["bought"],
-    modelExplanation: "The simple past of 'buy' is 'bought'. We use it because 'last week' refers to a finished time.",
-    feedback: {
-      correct: "Well done! You used the correct irregular past form.",
-      M1: "You seem to have used a present-perfect structure for a finished past event. Focus on the simple past form.",
-      M2: "You may be confusing a finished time with a duration that continues into the present.",
-      other: "Check whether 'buy' is regular or irregular. Some verbs change completely in the past."
-    },
-    source: "bank"
-  },
-
-  {
     id: "q03",
     format: "mcq",
     level: 1,
@@ -121,24 +103,6 @@ export const BANK = [
       M1: "You selected the present perfect with a finished past-time marker. Check whether the time period is over.",
       M2: "You may be mixing up duration expressions and finished past-time expressions. Look at the word 'last'.",
       other: "Check both the time expression and the verb structure. A sentence needs the right tense and verb form."
-    },
-    source: "bank"
-  },
-
-  {
-    id: "q06",
-    format: "correct",
-    level: 2,
-    skill: "form",
-    prompt: "Let's practise irregular verbs. Complete the sentence with the correct present perfect form: 'The students ___ (write) three essays so far.'",
-    answer: "have written",
-    acceptable: ["have written"],
-    modelExplanation: "The present perfect uses have/has + past participle. The past participle of 'write' is 'written'.",
-    feedback: {
-      correct: "Excellent! You used the correct helping verb and past participle.",
-      M1: "You seem to be focusing on the action as a finished past event. Notice that the sentence describes progress up to now.",
-      M2: "Check whether the sentence describes a duration or an amount completed up to the present.",
-      other: "Remember that present perfect needs a helping verb and a past participle. Check the irregular form of 'write'."
     },
     source: "bank"
   },

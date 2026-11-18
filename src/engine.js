@@ -39,16 +39,14 @@ export function decideNext(state, result) {
     if (!correct && tag) {
       newState.wrongByTag[tag] += 1;
 
-      if (tag === "M1") {
+      if (tag === "M1" || tag === "M2") {
         rule = "ALTERNATIVE";
         lessonId = "timeline";
+
         reason =
-          "You used the simple past for an action with a present result. Let's revisit the timeline and why the present perfect is needed.";
-      } else if (tag === "M2") {
-        rule = "ALTERNATIVE";
-        lessonId = "timeline";
-        reason =
-          "You used simple past with a duration such as 'for 5 years', which describes something still true. Let's revisit the timeline.";
+          tag === "M1"
+            ? "You used simple past for an action with a present result. Let's revisit the timeline."
+            : "You used simple past with a duration describing something still true. Let's revisit the timeline.";
       } else if (
         (tag === "form" || tag === "marker") &&
         newState.wrongByTag[tag] >= 2
@@ -58,8 +56,8 @@ export function decideNext(state, result) {
 
         reason =
           tag === "form"
-            ? "You've made mistakes with the past participle form more than once. Let's revise participles before moving ahead."
-            : "You've made mistakes identifying tense markers more than once. Let's revise the markers before moving ahead.";
+            ? "You've made mistakes with past participle forms more than once. Let's revise participles."
+            : "You've made mistakes identifying tense markers more than once. Let's revise the markers.";
       } else if (tag === "form") {
         reason =
           "You made a mistake with the verb form. Let's practise past participles a little more.";
@@ -75,15 +73,15 @@ export function decideNext(state, result) {
     }
   }
 
-  // Record the attempt for the session summary.
+  // Append exactly one log entry for this attempt.
   newState.log.push({
     qid: result.qid,
     format: result.format,
-    level: result.level,
+    level: state.level,
     correct,
     tag: correct ? null : tag,
     rule,
-    timeMs: result.timeMs ?? 0,
+    timeMs: result.timeMs,
   });
 
   return {

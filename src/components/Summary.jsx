@@ -36,7 +36,7 @@ function fmt(total) {
 }
 
 export default function Summary({ state, onRestart }) {
-  const log = state.log || [];
+  const log = (state.log || []).filter((l) => l && l.qid);
   const wrong = state.wrongByTag || { M1: 0, M2: 0, form: 0, marker: 0 };
   const right = log.filter((l) => l.correct).length;
   const total = log.length;
@@ -45,6 +45,7 @@ export default function Summary({ state, onRestart }) {
   const maxWrong = Math.max(1, ...Object.keys(TAGS).map((k) => wrong[k] || 0));
   const topTag = Object.keys(TAGS).reduce((a, k) => ((wrong[k] || 0) > (wrong[a] || 0) ? k : a), "M1");
   const hasMistakes = (wrong[topTag] || 0) > 0;
+  const allCorrect = total > 0 && log.every((l) => l.correct);
   const message = pct >= 80 ? "Strong work." : pct >= 50 ? "Good progress." : "A solid start. Practice makes this stick.";
 
   return (
@@ -71,7 +72,13 @@ export default function Summary({ state, onRestart }) {
           </div>
         ))}
         <p style={{ margin: "4px 0 0", fontSize: 16, background: C.tealSoft, borderRadius: 8, padding: 12 }}>
-          {hasMistakes ? `Focus next: ${TAGS[topTag].tip}` : "No mistakes logged. Nice and clean."}
+          {allCorrect
+            ? "No mistakes logged. Nice and clean."
+            : hasMistakes
+              ? `Focus next: ${TAGS[topTag].tip}`
+              : total > 0
+                ? "Look back at the wrong answers in the task log below."
+                : "Answer a few tasks to see your focus areas."}
         </p>
       </div>
 
@@ -96,7 +103,7 @@ export default function Summary({ state, onRestart }) {
                     <td style={{ ...S.td, fontWeight: 700, color: l.correct ? C.green : C.red }}>
                       {l.correct ? "Right" : "Wrong"}
                     </td>
-                    <td style={S.td}>{l.tag || "none"}</td>
+                    <td style={S.td}>{l.tag ? (TAGS[l.tag]?.name || l.tag) : "none"}</td>
                     <td style={S.td}>{l.rule || "none"}</td>
                     <td style={S.td}>{(l.timeMs / 1000).toFixed(1)}s</td>
                   </tr>

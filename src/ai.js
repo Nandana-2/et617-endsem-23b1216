@@ -17,7 +17,7 @@ const fetchWithTimeout = async (url, options = {}) => {
   }
 };
 
-export async function getNextQuestion({ skill, level, lastTag, askedIds }) {
+export async function getNextQuestion({ skill, level, lastTag, askedIds = [] }) {
   try {
     const res = await fetchWithTimeout('/api/generate', {
       method: 'POST',
@@ -27,6 +27,12 @@ export async function getNextQuestion({ skill, level, lastTag, askedIds }) {
     
     if (!res.ok) throw new Error('Generation failed or invalid');
     const question = await res.json();
+    
+    // Treat as invalid if the ID or prompt is already in askedIds
+    if (askedIds.includes(question.id) || askedIds.includes(question.prompt)) {
+      throw new Error('Duplicate question generated');
+    }
+    
     return question;
   } catch (err) {
     console.warn("AI generation failed, falling back to bank.", err);
